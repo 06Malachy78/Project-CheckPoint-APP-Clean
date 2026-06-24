@@ -7,7 +7,7 @@ export default function ProfileLoading() {
         <div className="h-3 w-36 bg-zinc-900 rounded font-mono" />
       </section>
 
-      {/* Top 3 Games Section Skeletonnn */}
+      {/* Top 3 Games Section Skeletonnnn */}
       <section className="mb-16">
         <div className="h-5 w-40 bg-zinc-800/60 rounded mb-6" />
         <div className="grid grid-cols-3 gap-4">
