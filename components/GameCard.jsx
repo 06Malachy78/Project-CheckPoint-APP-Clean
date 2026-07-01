@@ -1,34 +1,21 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 
-export default function GameCard({ game }) {
-  // IGDB specific: replace 't_thumb' with 't_cover_big' for better quality
-  const coverUrl = game.cover?.url?.replace('t_thumb', 't_cover_big') || 'https://via.placeholder.com/264x352?text=No+Cover';
+export default function GameCard({ game, coverMode = 'cover' }) {
+  const coverUrl = game.cover?.url?.replace('t_thumb', 't_cover_big') || 'https://via.placeholder.com/640x360?text=No+Cover';
   const finalUrl = coverUrl.startsWith('//') ? `https:${coverUrl}` : coverUrl;
 
   return (
-    <Link href={`/game/${game.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div style={{ 
-        width: '100%', 
-        borderRadius: '10px', 
-        overflow: 'hidden', 
-        border: '1px solid #27272a',
-        transition: 'transform 0.2s'
-      }}>
-        <img 
-          src={finalUrl} 
-          alt={game.name} 
-          style={{ 
-            width: '100%', 
-            height: '250px', // Forces all posters to be the same height
-            objectFit: 'cover', // Crops them neatly instead of stretching
-            display: 'block' 
-          }}
+    <Link href={`/game/${game.id}`} className="group block overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-sm transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="aspect-[3/4] w-full overflow-hidden bg-zinc-900">
+        <img
+          src={finalUrl}
+          alt={game.name}
+          className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${coverMode === 'contain' ? 'object-contain' : 'object-cover'}`}
         />
-        <div style={{ padding: '10px', backgroundColor: '#18181b' }}>
-          <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {game.name}
-          </p>
-        </div>
+      </div>
+
+      <div className="px-3 py-3">
+        <p className="text-sm font-bold text-zinc-100 truncate">{game.name}</p>
       </div>
     </Link>
   );

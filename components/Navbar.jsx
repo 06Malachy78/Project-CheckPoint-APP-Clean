@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AuthModal from './AuthModal';
 
@@ -18,6 +18,7 @@ export default function Navbar() {
   
   const dropdownRef = useRef(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const getUser = async () => {
@@ -161,7 +162,7 @@ export default function Navbar() {
               <>
                 <Link 
                   href="/profile" 
-                  className="text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-[#00FF88] transition-colors"
+                  className={`text-xs font-black uppercase tracking-widest transition-colors ${pathname === '/profile' ? 'text-[#00FF88]' : 'text-zinc-400 hover:text-[#00FF88]'}`}
                 >
                   Profile
                 </Link>

@@ -71,7 +71,7 @@ export default function GlobalActivityFeed({ feedItems }) {
                   <span className="text-[#00FF88] truncate">{item.username}</span>
                   <span className="text-zinc-700">•</span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-zinc-900 border border-zinc-800 px-2 py-1 text-[10px] font-semibold text-zinc-300">
-                    <span className="text-[#00FF88]">★</span>
+                    <span className="text-[#00FF88]">👍</span>
                     {item.like_count ?? 0}
                   </span>
                 </div>

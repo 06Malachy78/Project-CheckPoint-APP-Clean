@@ -26,6 +26,12 @@ export default async function ReviewDetailPage({ params }) {
 
   const game = review.game_id ? await fetchGameData(review.game_id) : null;
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('username', review.username)
+    .maybeSingle();
+
   return (
     <main className="min-h-screen bg-[#09090b] text-white">
       <Navbar />
@@ -36,7 +42,11 @@ export default async function ReviewDetailPage({ params }) {
           </a>
         </div>
 
-        <ReviewDetailClient review={review} game={game || { name: review.game_title, cover: { url: '' } }} />
+        <ReviewDetailClient
+          review={review}
+          game={game || { name: review.game_title, cover: { url: '' } }}
+          profile={profile}
+        />
       </div>
     </main>
   );

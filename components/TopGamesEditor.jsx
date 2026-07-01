@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import GameCard from './GameCard';
@@ -60,7 +60,7 @@ export default function TopGamesEditor({ profile, userId }) {
           <div key={i} className="group relative aspect-[3/4] rounded-2xl border-2 border-dashed border-zinc-800 flex flex-col items-center justify-center bg-zinc-900/20 overflow-hidden transition-all hover:border-[#00FF88]/50">
             {game ? (
               <>
-                <GameCard game={game} />
+                <GameCard game={game} fit="contain" />
                 <button 
                   onClick={() => setEditingSlot(i + 1)}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-black tracking-widest text-[#00FF88] uppercase"
@@ -119,3 +119,4 @@ export default function TopGamesEditor({ profile, userId }) {
     </div>
   );
 }
+
