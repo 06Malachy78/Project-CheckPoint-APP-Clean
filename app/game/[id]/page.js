@@ -1,6 +1,5 @@
 import { fetchGameData } from '../../../lib/igdb';
 import { createClient } from '../../../lib/server';
-import Navbar from '../../../components/Navbar';
 import GamePageClient from './GamePageClient';
 import GameReviewCard from '../../../components/GameReviewCard';
 
@@ -25,8 +24,6 @@ export default async function GamePage({ params }) {
 
   return (
     <main className="min-h-screen bg-[#09090b] text-white">
-      <Navbar />
-      
       <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#00FF88]/10 to-transparent -z-10" />
 
       <div className="max-w-6xl mx-auto pt-32 px-6 pb-20">

@@ -7,11 +7,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AuthModal from './AuthModal';
 
-export default function Navbar() {
+export default function Navbar({ initialUser = null }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(initialUser);
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
@@ -21,18 +21,25 @@ export default function Navbar() {
   const pathname = usePathname();
 
   useEffect(() => {
+    let isMounted = true;
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      if (isMounted) setUser(user);
     };
-    getUser();
+
+    if (!initialUser) {
+      getUser();
+    }
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
     });
 
-    return () => authListener.subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [initialUser]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {

@@ -6,56 +6,142 @@ import { supabase } from '@/lib/supabase';
 
 export default function ReviewDetailClient({ review, game, profile }) {
   const [hasLiked, setHasLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(review.like_count ?? 0);
+  const [likeId, setLikeId] = useState(null);
+  const [likeCount, setLikeCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingLikeStatus, setIsLoadingLikeStatus] = useState(true);
   const [userId, setUserId] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    const loadLikeStatus = async () => {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+    let mounted = true;
 
-      if (userError) {
-        console.error('Unable to load user session:', userError.message);
-        setIsLoadingLikeStatus(false);
-        return;
-      }
+    const updateLikeStatus = async (user) => {
+      if (!mounted) return;
 
       if (!user) {
+        setUserId(null);
+        setHasLiked(false);
+        setLikeId(null);
         setErrorMessage('Log in to like this review.');
+        await refreshLikeCount();
         setIsLoadingLikeStatus(false);
         return;
       }
 
+      setErrorMessage('');
       setUserId(user.id);
-
-      const { data, error } = await supabase
-        .from('review_likes')
-        .select('id')
-        .eq('review_id', review.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Unable to load like status:', error.message);
-      }
-
-      if (data) {
-        setHasLiked(true);
-      }
-
+      await refreshLikeState(user.id);
       setIsLoadingLikeStatus(false);
     };
 
+    const loadLikeStatus = async () => {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Unable to load user session:', error.message);
+      }
+
+      await updateLikeStatus(data?.session?.user ?? null);
+    };
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      updateLikeStatus(session?.user ?? null);
+    });
+
     loadLikeStatus();
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
   }, [review.id]);
 
+  const refreshLikeCount = async () => {
+    const { data: _, count, error: countError } = await supabase
+      .from('review_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('review_id', review.id);
+
+    if (countError) {
+      console.error('Unable to refresh review like count:', countError.message);
+    } else if (typeof count === 'number') {
+      setLikeCount(count);
+    }
+  };
+
+  const refreshLikeState = async (currentUserId) => {
+    await refreshLikeCount();
+
+    if (!currentUserId) {
+      setHasLiked(false);
+      setLikeId(null);
+      return;
+    }
+
+    const { data: existingLike, error: existingLikeError } = await supabase
+      .from('review_likes')
+      .select('id')
+      .match({ review_id: review.id, user_id: currentUserId })
+      .maybeSingle();
+
+    if (existingLikeError && existingLikeError.code !== 'PGRST116') {
+      console.error('Unable to refresh user like status:', existingLikeError.message);
+      return;
+    }
+
+    setHasLiked(Boolean(existingLike));
+    setLikeId(existingLike?.id ?? null);
+  };
+
+  const handleUnlike = async () => {
+    if (isSaving || !userId || !hasLiked) return;
+
+    setErrorMessage('');
+    setIsSaving(true);
+
+    let deleteError = null;
+
+    if (likeId) {
+      const { error } = await supabase
+        .from('review_likes')
+        .delete()
+        .eq('id', likeId)
+        .eq('user_id', userId);
+
+      deleteError = error;
+    }
+
+    if (!likeId || (deleteError && deleteError.code === 'PGRST116')) {
+      const { error } = await supabase
+        .from('review_likes')
+        .delete()
+        .eq('review_id', review.id)
+        .eq('user_id', userId);
+
+      deleteError = error;
+    }
+
+    if (deleteError) {
+      const message = deleteError.message || 'Unable to remove your like. Please try again.';
+      setErrorMessage(message);
+      console.error('Unable to delete like row:', deleteError);
+      setIsSaving(false);
+      return;
+    }
+
+    // Refresh from DB so UI reflects confirmed state.
+    await refreshLikeState(userId);
+    setIsSaving(false);
+  };
+
   const handleLike = async () => {
-    if (isSaving || !userId || hasLiked) return;
+    if (isSaving || !userId) return;
+    if (hasLiked) {
+      await handleUnlike();
+      return;
+    }
 
     setErrorMessage('');
     setIsSaving(true);
@@ -64,9 +150,16 @@ export default function ReviewDetailClient({ review, game, profile }) {
       .from('review_likes')
       .insert([{ review_id: review.id, user_id: userId }])
       .select('id')
-      .single();
+      .maybeSingle();
 
     if (likeError) {
+      if (likeError.message?.includes('unique constraint') || likeError.code === '23505') {
+        setHasLiked(true);
+        await refreshLikeState(userId);
+        setIsSaving(false);
+        return;
+      }
+
       const message = likeError.message || 'Unable to record your like. Please try again.';
       setErrorMessage(message);
       console.error('Unable to save like row:', likeError);
@@ -74,22 +167,9 @@ export default function ReviewDetailClient({ review, game, profile }) {
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from('reviews')
-      .update({ like_count: likeCount + 1 })
-      .eq('id', review.id);
-
-    if (updateError) {
-      const message = updateError.message || 'Unable to update like count. Please try again.';
-      setErrorMessage(message);
-      console.error('Unable to update like count:', updateError);
-      await supabase.from('review_likes').delete().eq('id', insertedLike.id);
-      setIsSaving(false);
-      return;
-    }
-
     setHasLiked(true);
-    setLikeCount((count) => count + 1);
+    setLikeId(insertedLike?.id ?? null);
+    await refreshLikeState(userId);
     setIsSaving(false);
   };
 
@@ -130,43 +210,57 @@ export default function ReviewDetailClient({ review, game, profile }) {
               </Link>
             </div>
 
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 relative">
               <div className="min-w-0">
                 <h1 className="text-3xl font-black tracking-tight text-zinc-100 break-words leading-tight">
                   {review.game_title}
                 </h1>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-zinc-400">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-3 py-1 text-[#00FF88] font-black border border-zinc-800">
+                    <span className="text-yellow-400">★</span>
+                    {review.rating}/5
+                  </span>
+                  <span className="uppercase tracking-[0.3em] text-zinc-500">Rated review</span>
+                </div>
                 <p className="text-zinc-500 text-xs uppercase tracking-[0.3em] mt-2">
                   {new Date(review.created_at).toLocaleDateString('en-GB')}
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-3">
-                <span className="inline-flex items-center gap-2 text-[#00FF88] font-black text-xl">
-                  <span className="text-yellow-400">★</span>
-                  {review.rating}/5
-                </span>
-                <button
-                  type="button"
-                  onClick={handleLike}
-                  disabled={isSaving || isLoadingLikeStatus || !userId || hasLiked}
-                  className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] font-bold transition ${
-                    hasLiked ? 'bg-[#00FF88] text-black border-[#00FF88]' : 'border-zinc-700 text-zinc-100 hover:border-[#00FF88] hover:text-[#00FF88]'
-                  } ${isSaving || isLoadingLikeStatus ? 'opacity-60 cursor-not-allowed' : ''}`}
+              <button
+                type="button"
+                onClick={hasLiked ? handleUnlike : handleLike}
+                disabled={isSaving || isLoadingLikeStatus || !userId}
+                className={`absolute right-0 top-0 inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+                  hasLiked
+                    ? 'bg-zinc-950 border-[#00FF88] text-[#00FF88]'
+                    : 'bg-zinc-950 border-zinc-700 text-[#00FF88] hover:border-[#00FF88] hover:text-[#00FF88]'
+                } ${isSaving || isLoadingLikeStatus ? 'opacity-60 cursor-not-allowed' : ''}`}
+                aria-label={hasLiked ? 'Remove like' : 'Like review'}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  aria-hidden="true"
+                  fill={hasLiked ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth="1.8"
                 >
-                  {hasLiked ? '👍 Liked' : '👍 Like'}
-                </button>
-              </div>
-
-              {hasLiked && (
-                <p className="text-xs text-[#00FF88] uppercase tracking-[0.2em] font-bold">
-                  You've already liked this review.
-                </p>
-              )}
+                  <path d="M12 20.4c-.3 0-.6-.1-.8-.3C6.5 16 3.5 13.2 3.5 9.8 3.5 7.1 5.6 5 8.3 5c1.5 0 2.9.7 3.7 1.9C12.8 5.7 14.2 5 15.7 5c2.7 0 4.8 2.1 4.8 4.8 0 3.4-3 6.2-7.7 10.3-.2.2-.5.3-.8.3z" />
+                </svg>
+              </button>
             </div>
 
             <div className="flex items-center gap-3 text-sm text-zinc-400">
               <span className="inline-flex items-center gap-1 text-[#00FF88] font-bold">
-                <span>👍</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-3.5 w-3.5"
+                  aria-hidden="true"
+                  fill="currentColor"
+                >
+                  <path d="M12 20.4c-.3 0-.6-.1-.8-.3C6.5 16 3.5 13.2 3.5 9.8 3.5 7.1 5.6 5 8.3 5c1.5 0 2.9.7 3.7 1.9C12.8 5.7 14.2 5 15.7 5c2.7 0 4.8 2.1 4.8 4.8 0 3.4-3 6.2-7.7 10.3-.2.2-.5.3-.8.3z" />
+                </svg>
                 {likeCount}
               </span>
               <span>{likeCount === 1 ? 'like' : 'likes'}</span>

@@ -1,10 +1,8 @@
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 
 export default function AboutPage() {
   return (
     <>
-      <Navbar />
       <main className="max-w-5xl mx-auto px-6 pt-32 pb-20 text-zinc-100">
         <Link href="/" className="inline-flex items-center gap-2 text-[#00FF88] hover:opacity-70 transition-opacity mb-10 text-xs font-bold uppercase tracking-widest">
         
@@ -14,7 +12,10 @@ export default function AboutPage() {
         <h1 className="text-4xl font-black uppercase tracking-tighter text-white mb-4">About CHECKPOINT</h1>
         <p className="text-zinc-400 max-w-3xl leading-8">
           CHECKPOINT is a community hub for gamers who want to discover new titles, save their favorite games, and share honest reviews.
-          Whether you're exploring classics or the latest releases, the app helps you organize your top picks and keep a personal record.
+          Whether you're exploring classics or the latest releases, the site helps you organize your top picks and keep a personal record.
+        </p>
+        <p className="text-zinc-500 mt-6 text-sm">
+          Built by <span className="text-[#00FF88] font-semibold">Malachy Hearnden</span> as a personal gaming journal and review destination.
         </p>
       </section>
 

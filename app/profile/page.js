@@ -3,7 +3,6 @@ import { createClient } from '../../lib/server';
 import GameCard from '@/components/GameCard';
 import TopGamesEditor from '@/components/TopGamesEditor';
 import ReviewCard from '@/components/ReviewCard.jsx';
-import Navbar from '@/components/Navbar';
 
 export default async function ProfilePage() {
   const supabase = await createClient(); 
@@ -32,7 +31,6 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <Navbar />
       <main className="max-w-4xl mx-auto pt-32 px-6 pb-20">
         <section className="mb-16 border-b border-zinc-900 pb-10">
           <h1 className="text-4xl font-black mb-2 uppercase tracking-tighter text-white">My Profile</h1>
@@ -54,7 +52,7 @@ export default async function ProfilePage() {
         <h2 className="text-lg font-black mb-6 uppercase tracking-widest text-zinc-400">My Reviews</h2>
         <div className="space-y-4">
           {reviews.length > 0 ? (
-            reviews.map((review) => <ReviewCard key={review.id} review={review} />)
+            reviews.map((review) => <ReviewCard key={review.id} review={review} showActions />)
           ) : (
             <p className="text-zinc-600 text-xs uppercase tracking-widest italic">You haven't reviewed any games yet.</p>
           )}

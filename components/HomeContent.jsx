@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import GuestLanding from '@/components/GuestLanding';
 import GlobalActivityFeed from '@/components/GlobalActivityFeed';
 
-export default function HomeContent({ initialFeedItems, totalCheckpoints, initialIsGuest }) {
+export default function HomeContent({ initialFeedItems, totalCheckpoints, initialIsGuest, trendingGames = [] }) {
   const [isGuest, setIsGuest] = useState(initialIsGuest);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function HomeContent({ initialFeedItems, totalCheckpoints, initia
   }, []);
 
   if (isGuest) {
-    return <GuestLanding totalCheckpoints={totalCheckpoints || 0} />;
+    return <GuestLanding totalCheckpoints={totalCheckpoints || 0} trendingGames={trendingGames} />;
   }
 
   return (
