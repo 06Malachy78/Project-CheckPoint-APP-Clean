@@ -16,8 +16,9 @@ export default function ReviewCard({ review }) {
               {review.game_title}
             </h3>
           </div>
-          <span className="text-[#00FF88] font-black text-xs">
-            {review.rating} / 10
+          <span className="inline-flex items-center gap-2 text-[#00FF88] font-black text-xs">
+            <span className="text-yellow-400">★</span>
+            {review.rating} / 5
           </span>
         </div>
 

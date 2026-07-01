@@ -74,6 +74,12 @@ export default function GlobalActivityFeed({ feedItems }) {
                     <span className="text-[#00FF88]">👍</span>
                     {item.like_count ?? 0}
                   </span>
+                  {typeof item.rating === 'number' && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-900 border border-zinc-800 px-2 py-1 text-[10px] font-semibold text-zinc-300">
+                      <span className="text-yellow-400">★</span>
+                      {item.rating}/5
+                    </span>
+                  )}
                 </div>
 
                 <h2 className="text-lg font-bold text-zinc-100 group-hover:text-[#00FF88] transition-colors line-clamp-1 truncate">

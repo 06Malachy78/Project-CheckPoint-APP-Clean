@@ -34,21 +34,17 @@ export default async function ProfilePage() {
     <>
       <Navbar />
       <main className="max-w-4xl mx-auto pt-32 px-6 pb-20">
-        <Link href="/" className="inline-flex items-center gap-2 text-[#00FF88] hover:opacity-70 transition-opacity mb-8 text-xs font-bold uppercase tracking-widest">
-          â† Back to Dashboard
-        </Link>
-        
         <section className="mb-16 border-b border-zinc-900 pb-10">
-        <h1 className="text-4xl font-black mb-2 uppercase tracking-tighter text-white">My Profile</h1>
-        <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-           {profile?.username || user.email}
-        </p>
-      </section>
+          <h1 className="text-4xl font-black mb-2 uppercase tracking-tighter text-white">My Profile</h1>
+          <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
+            {profile?.username || user.email}
+          </p>
+        </section>
 
       {/* Top 3 Games Section */}
       <section className="mb-16">
-        <h2 className="text-lg font-black mb-6 flex items-center gap-2 uppercase tracking-widest text-zinc-400">
-          <span className="text-[#00FF88]">â˜…</span> Top 3 All-Time
+        <h2 className="text-lg font-black mb-6 uppercase tracking-widest text-zinc-400">
+          Top 3 All-Time
         </h2>
         <TopGamesEditor profile={profile} userId={user.id} />
       </section>

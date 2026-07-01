@@ -141,7 +141,10 @@ export default function ReviewDetailClient({ review, game, profile }) {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-3">
-                <span className="text-[#00FF88] font-black text-xl">{review.rating}/5</span>
+                <span className="inline-flex items-center gap-2 text-[#00FF88] font-black text-xl">
+                  <span className="text-yellow-400">★</span>
+                  {review.rating}/5
+                </span>
                 <button
                   type="button"
                   onClick={handleLike}
