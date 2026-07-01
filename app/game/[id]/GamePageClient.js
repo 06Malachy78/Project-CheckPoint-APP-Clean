@@ -16,12 +16,14 @@ export default function GamePageClient({ game }) {
     setIsCheckingAuth(false);
 
     if (error) {
-      console.error('Auth check failed:', error);
+      console.warn('Auth check failed, opening signup for guest:', error);
+      setAuthMode('signup');
+      setAuthOpen(true);
       return;
     }
 
     if (!user) {
-      setAuthMode('login');
+      setAuthMode('signup');
       setAuthOpen(true);
       return;
     }

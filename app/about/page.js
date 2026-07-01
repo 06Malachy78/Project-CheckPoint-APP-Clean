@@ -7,7 +7,7 @@ export default function AboutPage() {
       <Navbar />
       <main className="max-w-5xl mx-auto px-6 pt-32 pb-20 text-zinc-100">
         <Link href="/" className="inline-flex items-center gap-2 text-[#00FF88] hover:opacity-70 transition-opacity mb-10 text-xs font-bold uppercase tracking-widest">
-        â˜…
+        
       </Link>
 
       <section className="mb-12">
