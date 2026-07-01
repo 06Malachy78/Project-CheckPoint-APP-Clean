@@ -2,6 +2,7 @@ import { createClient } from '../lib/server';
 import { fetchGameData } from '../lib/igdb';
 import Navbar from '../components/Navbar';
 import Link from 'next/link';
+import GlobalActivityFeed from '@/components/GlobalActivityFeed';
 
 export default async function HomePage() {
   // Create the Supabase client FIRST
@@ -58,65 +59,7 @@ export default async function HomePage() {
         </header>
         {/* --- UPDATED HEADER END --- */}
 
-        {/* The Feed Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {feedItems.map((item) => (
-            <Link
-              href={`/game/${item.game_id}`}
-              key={item.id}
-              className="group bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-5 flex gap-5 hover:bg-zinc-800/60 transition-all duration-300 hover:border-[#00FF88]/30 hover:shadow-[0_0_30px_rgba(0,255,136,0.05)]"
-            >
-              {/* Game Poster Thumbnail */}
-              <div className="w-24 h-32 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-                <img
-                  src={item.gameData?.cover?.url?.replace('t_thumb', 't_cover_big')}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  alt={item.gameData?.name}
-                />
-              </div>
-
-              {/* Review Content */}
-              <div className="flex flex-col justify-between py-1">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[#00FF88] font-black text-xs uppercase tracking-tight">
-                      {item.username}
-                    </span>
-                    <span className="text-zinc-700 text-xs">•</span>
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <span
-                          key={i}
-                          className={
-                            i < item.rating
-                              ? 'text-yellow-500 text-[10px]'
-                              : 'text-zinc-800 text-[10px]'
-                          }
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <h2 className="text-lg font-bold text-zinc-100 group-hover:text-[#00FF88] transition-colors line-clamp-1">
-                    {item.gameData?.name}
-                  </h2>
-                  <p className="text-zinc-400 text-sm line-clamp-2 italic mt-2 leading-relaxed">
-                    "{item.content}"
-                  </p>
-                </div>
-
-                <span className="text-[10px] uppercase tracking-widest text-zinc-600 font-black mt-4">
-                  {new Date(item.created_at).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <GlobalActivityFeed feedItems={feedItems} />
 
         {feedItems.length === 0 && (
           <div className="text-center py-20 border-2 border-dashed border-zinc-900 rounded-3xl">

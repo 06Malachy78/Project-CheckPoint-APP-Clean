@@ -55,13 +55,7 @@ export default async function ProfilePage() {
         <h2 className="text-lg font-black mb-6 uppercase tracking-widest text-zinc-400">My Reviews</h2>
         <div className="space-y-4">
           {reviews.length > 0 ? (
-            reviews.map((review) => (
-              <div key={review.id} className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
-                <span className="text-[#00FF88] text-xs block mb-1">★ {review.rating}/5</span>
-                <h4 className="text-white font-bold text-base mb-1">{review.game_title}</h4>
-                <p className="text-zinc-400 text-sm">{review.content}</p>
-              </div>
-            ))
+            reviews.map((review) => <ReviewCard key={review.id} review={review} />)
           ) : (
             <p className="text-zinc-600 text-xs uppercase tracking-widest italic">You haven't reviewed any games yet.</p>
           )}

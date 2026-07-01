@@ -2,6 +2,7 @@ import { fetchGameData } from '../../../lib/igdb';
 import { createClient } from '../../../lib/server';
 import Navbar from '../../../components/Navbar';
 import GamePageClient from './GamePageClient';
+import GameReviewCard from '../../../components/GameReviewCard';
 
 
 export default async function GamePage({ params }) {
@@ -74,31 +75,7 @@ export default async function GamePage({ params }) {
               
               <div className="space-y-6">
                 {reviews && reviews.length > 0 ? (
-                  reviews.map((review) => (
-                    <div key={review.id} className="bg-zinc-900/40 border border-zinc-800/50 p-6 rounded-2xl backdrop-blur-sm">
-                      <div className="flex justify-between items-center mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#00FF88]/20 flex items-center justify-center text-[#00FF88] text-xs font-bold border border-[#00FF88]/30">
-                            {review.username?.charAt(0) || "U"}
-                          </div>
-                          <span className="text-zinc-100 font-bold">{review.username}</span>
-                        </div>
-                        <div className="flex gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} className={i < review.rating ? "text-yellow-500" : "text-zinc-700"}>
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-zinc-400 leading-relaxed">
-                        {review.content}
-                      </p>
-                      <div className="mt-4 text-[10px] uppercase tracking-widest text-zinc-600 font-bold">
-                        Logged on {new Date(review.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))
+                  reviews.map((review) => <GameReviewCard key={review.id} review={review} />)
                 ) : (
                   <div className="py-10 text-center border-2 border-dashed border-zinc-900 rounded-3xl">
                     <p className="text-zinc-600 font-medium italic">
