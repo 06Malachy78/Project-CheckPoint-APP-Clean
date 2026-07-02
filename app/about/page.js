@@ -15,7 +15,7 @@ export default function AboutPage() {
           Whether you're exploring classics or the latest releases, the site helps you organize your top picks and keep a personal record.
         </p>
         <p className="text-zinc-500 mt-6 text-sm">
-          Built by <span className="text-[#00FF88] font-semibold">Malachy Hearnden</span> as a personal gaming journal and review destination.
+          Built by <a href="https://www.linkedin.com/in/malachy-hearnden-84a0aa282" target="_blank" rel="noopener noreferrer" className="text-[#00FF88] font-semibold hover:underline">Malachy Hearnden</a> as a personal gaming journal and review destination.
         </p>
       </section>
 

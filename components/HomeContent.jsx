@@ -39,7 +39,7 @@ export default function HomeContent({ initialFeedItems, totalCheckpoints, initia
     <>
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter mb-2 text-zinc-100 uppercase">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tighter mb-2 text-zinc-100 uppercase">
             Global Activity
           </h1>
           <p className="text-zinc-500 font-medium">Recent checkpoints from the community.</p>
@@ -50,7 +50,7 @@ export default function HomeContent({ initialFeedItems, totalCheckpoints, initia
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00FF88] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00FF88]"></span>
           </span>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+          <span className="text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-[0.2em] text-zinc-400">
             {totalCheckpoints || 0} Checkpoints Logged
           </span>
         </div>

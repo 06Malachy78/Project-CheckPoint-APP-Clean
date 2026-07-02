@@ -26,14 +26,14 @@ export default function GlobalActivityFeed({ feedItems }) {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
-          <p className="text-zinc-400 text-sm uppercase tracking-[0.2em] font-black">Sort by</p>
+          <p className="text-zinc-400 text-sm uppercase tracking-[0.12em] sm:tracking-[0.2em] font-black">Sort by</p>
           <div className="flex flex-wrap gap-2">
             {sortOptions.map((option) => (
               <button
                 key={option.key}
                 type="button"
                 onClick={() => setSortBy(option.key)}
-                className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition ${
+                className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.18em] transition ${
                   sortBy === option.key
                     ? 'bg-[#00FF88] text-black'
                     : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800'
@@ -55,9 +55,9 @@ export default function GlobalActivityFeed({ feedItems }) {
           <Link
             href={`/review/${item.id}`}
             key={item.id}
-            className="group bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-5 flex gap-5 hover:bg-zinc-800/60 transition-all duration-300 hover:border-[#00FF88]/30 hover:shadow-[0_0_30px_rgba(0,255,136,0.05)]"
+            className="group bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5 hover:bg-zinc-800/60 transition-all duration-300 hover:border-[#00FF88]/30 hover:shadow-[0_0_30px_rgba(0,255,136,0.05)]"
           >
-            <div className="w-24 h-32 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
+            <div className="w-full sm:w-24 h-48 sm:h-32 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
               <img
                 src={item.gameData?.cover?.url?.replace('t_thumb', 't_cover_big')}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
@@ -71,7 +71,14 @@ export default function GlobalActivityFeed({ feedItems }) {
                   <span className="text-[#00FF88] truncate">{item.username}</span>
                   <span className="text-zinc-700">•</span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-zinc-900 border border-zinc-800 px-2 py-1 text-[10px] font-semibold text-zinc-300">
-                    <span className="text-[#00FF88]">👍</span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-3.5 w-3.5 text-[#00FF88]"
+                      aria-hidden="true"
+                      fill="currentColor"
+                    >
+                      <path d="M12 20.4c-.3 0-.6-.1-.8-.3C6.5 16 3.5 13.2 3.5 9.8 3.5 7.1 5.6 5 8.3 5c1.5 0 2.9.7 3.7 1.9C12.8 5.7 14.2 5 15.7 5c2.7 0 4.8 2.1 4.8 4.8 0 3.4-3 6.2-7.7 10.3-.2.2-.5.3-.8.3z" />
+                    </svg>
                     {item.like_count ?? 0}
                   </span>
                   {typeof item.rating === 'number' && (

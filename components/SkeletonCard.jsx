@@ -1,8 +1,8 @@
 export default function SkeletonCard() {
   return (
-    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-5 flex gap-5 animate-pulse">
+    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5 animate-pulse">
       {/* Game Poster Skeleton */}
-      <div className="w-24 h-32 flex-shrink-0 bg-zinc-800 rounded-lg"></div>
+      <div className="w-full sm:w-24 h-48 sm:h-32 flex-shrink-0 bg-zinc-800 rounded-lg"></div>
 
       {/* Content Skeleton */}
       <div className="flex flex-col justify-between py-1 flex-grow">

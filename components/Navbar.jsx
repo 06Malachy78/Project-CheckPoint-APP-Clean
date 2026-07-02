@@ -116,13 +116,13 @@ export default function Navbar({ initialUser = null }) {
   return (
     <>
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 sm:gap-6">
           
-          <Link href="/" className="text-[#00FF88] font-black text-xl tracking-tighter hover:opacity-80 transition-opacity">
+          <Link href="/" className="text-[#00FF88] font-black text-lg sm:text-xl tracking-tighter transition-colors duration-200 hover:text-[#7CFFBF] hover:opacity-90">
             CHECKPOINT
           </Link>
 
-          <div className="relative flex-grow max-w-md" ref={dropdownRef}>
+          <div className="relative order-3 basis-full sm:order-2 sm:basis-auto sm:flex-grow sm:max-w-md" ref={dropdownRef}>
             <form onSubmit={handleSearchSubmit}>
               <input
                 type="text"
@@ -130,7 +130,7 @@ export default function Navbar({ initialUser = null }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => query.length >= 2 && setIsOpen(true)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-full px-5 py-2 text-sm text-white focus:outline-none focus:border-[#00FF88]/50 transition-all shadow-inner"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-full px-4 sm:px-5 py-2 text-sm text-white focus:outline-none focus:border-[#00FF88]/50 transition-all shadow-inner"
               />
             </form>
 
@@ -163,20 +163,20 @@ export default function Navbar({ initialUser = null }) {
             )}
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="ml-auto sm:ml-0 order-2 sm:order-3 flex items-center gap-3 sm:gap-6">
             {/* 🔥 2. ALTERED AUTHENTICATED LINKS BLOCK */}
             {user ? (
               <>
                 <Link 
                   href="/profile" 
-                  className={`text-xs font-black uppercase tracking-widest transition-colors ${pathname === '/profile' ? 'text-[#00FF88]' : 'text-zinc-400 hover:text-[#00FF88]'}`}
+                  className={`text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-colors ${pathname === '/profile' ? 'text-[#00FF88]' : 'text-zinc-400 hover:text-[#00FF88]'}`}
                 >
                   Profile
                 </Link>
                 
                 <button 
                   onClick={handleLogOut}
-                  className="text-zinc-500 hover:text-red-400 text-xs font-black uppercase tracking-widest transition-colors cursor-pointer bg-transparent border-none outline-none"
+                  className="text-zinc-500 hover:text-red-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-colors cursor-pointer bg-transparent border-none outline-none"
                 >
                   Log Out
                 </button>
@@ -186,7 +186,7 @@ export default function Navbar({ initialUser = null }) {
                 {/* CREATE ACCOUNT with Hover Glow */}
                 <button 
                   onClick={() => openAuth('signup')}
-                  className="text-zinc-400 hover:text-[#00FF88] text-xs font-black uppercase tracking-widest transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                  className="text-zinc-400 hover:text-[#00FF88] text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-all duration-300"
                 >
                   Create Account
                 </button>
@@ -194,7 +194,7 @@ export default function Navbar({ initialUser = null }) {
                 {/* SIGN IN  ... */} 
                 <button 
                   onClick={() => openAuth('login')}
-                  className="bg-[#00FF88] text-black px-8 py-2 rounded-full text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,255,136,0.15)] active:scale-95"
+                  className="bg-[#00FF88] text-black px-4 sm:px-8 py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-all shadow-[0_0_20px_rgba(0,255,136,0.15)]"
                 >
                   Sign In
                 </button>

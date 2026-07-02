@@ -117,7 +117,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#09090b] text-white">
-      <div className="max-w-6xl mx-auto pt-32 px-6 pb-20">
+      <div className="max-w-6xl mx-auto pt-36 sm:pt-32 px-4 sm:px-6 pb-16 sm:pb-20">
         <HomeContent
           initialFeedItems={feedItems}
           totalCheckpoints={totalCheckpoints || 0}

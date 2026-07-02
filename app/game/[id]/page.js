@@ -26,25 +26,25 @@ export default async function GamePage({ params }) {
     <main className="min-h-screen bg-[#09090b] text-white">
       <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#00FF88]/10 to-transparent -z-10" />
 
-      <div className="max-w-6xl mx-auto pt-32 px-6 pb-20">
+      <div className="max-w-6xl mx-auto pt-36 sm:pt-32 px-4 sm:px-6 pb-16 sm:pb-20">
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-12 items-start">
           
           {/* Left Column: Game Poster */}
-          <div className="w-full sticky top-32">
+          <div className="w-full md:sticky md:top-32">
             <img 
               src={finalCover} 
               alt={game.name} 
-              className="w-full rounded-2xl shadow-2xl border border-zinc-800 shadow-black/50"
+              className="w-full max-w-sm mx-auto md:max-w-none rounded-2xl shadow-2xl border border-zinc-800 shadow-black/50"
             />
           </div>
 
           {/* Right Column: Game Details */}
           <div className="space-y-8">
             <header>
-              <h1 className="text-6xl font-black tracking-tighter mb-2 leading-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter mb-2 leading-tight break-words">
                 {game.name}
               </h1>
-              <div className="flex items-center gap-3 text-zinc-500 font-bold text-sm tracking-widest uppercase">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-zinc-500 font-bold text-sm tracking-[0.12em] sm:tracking-widest uppercase">
                 <span>{new Date(game.first_release_date * 1000).getFullYear()}</span>
                 <span>•</span>
                 <span className="text-[#00FF88]">Checkpoint Verified</span>

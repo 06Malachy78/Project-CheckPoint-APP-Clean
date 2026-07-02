@@ -177,7 +177,7 @@ export default function ReviewDetailClient({ review, game, profile }) {
     <div className="space-y-6">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
         <div className="flex flex-col md:flex-row md:items-start gap-6">
-          <div className="w-full md:w-60 flex-shrink-0 rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950">
+          <div className="w-full md:w-60 flex-shrink-0 rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 aspect-[3/4] md:aspect-auto">
             <img
               src={game.cover?.url?.replace('t_thumb', 't_cover_big')}
               alt={game.name}
