@@ -17,6 +17,9 @@ export default function AboutPage() {
         <p className="text-zinc-500 mt-6 text-sm">
           Built by <a href="https://www.linkedin.com/in/malachy-hearnden-84a0aa282" target="_blank" rel="noopener noreferrer" className="text-[#00FF88] font-semibold hover:underline">Malachy Hearnden</a> as a personal gaming journal and review destination.
         </p>
+        <p className="text-zinc-500 mt-3 text-sm">
+          Game data is powered by <a href="https://www.igdb.com/" target="_blank" rel="noopener noreferrer" className="text-[#00FF88] font-semibold hover:underline">IGDB</a> (Internet Game Database).
+        </p>
       </section>
 
       <section className="grid gap-8 md:grid-cols-2">
