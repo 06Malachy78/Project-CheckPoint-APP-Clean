@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import GameCard from './GameCard';
-import { supabase } from '@/lib/supabase'; 
 import { useRouter } from 'next/navigation';
+import { parseApiResponse } from '@/lib/api-client';
 
 export default function TopGamesEditor({ profile, userId }) {
   const [editingSlot, setEditingSlot] = useState(null); 
@@ -25,24 +25,25 @@ export default function TopGamesEditor({ profile, userId }) {
   };
 
   const selectGame = async (game) => {
-    const gameData = {
-      id: game.id,
-      name: game.name,
-      cover: game.cover
-    };
+    const response = await fetch('/api/profile/top-games', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        slotNumber: editingSlot,
+        game: {
+          id: game.id,
+          name: game.name,
+          cover: game.cover,
+        },
+      }),
+    });
 
-    const updateField = `top_game_${editingSlot}`;
-    
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ 
-        id: userId, 
-        [updateField]: gameData,
-        updated_at: new Date().toISOString(),
-      });
+    const result = await parseApiResponse(response);
 
-    if (error) {
-      alert(error.message);
+    if (!response.ok) {
+      alert(result.error || 'Unable to update top games.');
     } else {
       setEditingSlot(null);
       setSearchQuery('');

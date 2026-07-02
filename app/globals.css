@@ -10,3 +10,18 @@ body {
   background: #09090b;
   color: white;
 }
+
+@keyframes checkpoint-scroll-y {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-scroll-y {
+  animation: checkpoint-scroll-y 26s linear infinite;
+}
+

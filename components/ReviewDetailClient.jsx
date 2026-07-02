@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export default function ReviewDetailClient({ review, game, profile }) {
+export default function ReviewDetailClient({ review, game, profile, isOwnReview = false }) {
   const [hasLiked, setHasLiked] = useState(false);
   const [likeId, setLikeId] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
@@ -177,20 +177,34 @@ export default function ReviewDetailClient({ review, game, profile }) {
     <div className="space-y-6">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
         <div className="flex flex-col md:flex-row md:items-start gap-6">
-          <div className="w-full md:w-60 flex-shrink-0 rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 aspect-[3/4] md:aspect-auto">
-            <img
-              src={game.cover?.url?.replace('t_thumb', 't_cover_big')}
-              alt={game.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
+          {review.game_id ? (
+            <Link
+              href={`/game/${review.game_id}`}
+              className="block w-full md:w-60 flex-shrink-0 rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 aspect-[3/4] md:aspect-auto transition-all duration-200 hover:opacity-90 hover:border-[#00FF88]/45 hover:shadow-[0_0_0_1px_rgba(0,255,136,0.18)]"
+              aria-label={`View ${game.name} game page`}
+            >
+              <img
+                src={game.cover?.url?.replace('t_thumb', 't_cover_big')}
+                alt={game.name}
+                className="w-full h-full object-cover"
+              />
+            </Link>
+          ) : (
+            <div className="w-full md:w-60 flex-shrink-0 rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 aspect-[3/4] md:aspect-auto">
+              <img
+                src={game.cover?.url?.replace('t_thumb', 't_cover_big')}
+                alt={game.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
 
           <div className="flex-1 space-y-4 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
               <span className="text-zinc-400 text-xs uppercase tracking-[0.2em] font-black">{game.name}</span>
               <span className="text-zinc-500">•</span>
               <Link
-                href={`/profile/${review.username}`}
+                href={isOwnReview ? '/profile' : `/profile/${review.username}`}
                 className="inline-flex items-center gap-3 group"
               >
                 <span className="flex items-center justify-center w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 text-xs font-bold uppercase text-zinc-100 overflow-hidden">

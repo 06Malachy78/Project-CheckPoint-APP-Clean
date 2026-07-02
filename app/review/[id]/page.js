@@ -6,6 +6,10 @@ export default async function ReviewDetailPage({ params }) {
   const { id } = params;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data: review } = await supabase
     .from('reviews')
     .select('*')
@@ -30,6 +34,8 @@ export default async function ReviewDetailPage({ params }) {
     .eq('username', review.username)
     .maybeSingle();
 
+  const isOwnReview = Boolean(user?.id && review.user_id && user.id === review.user_id);
+
   return (
     <main className="min-h-screen bg-[#09090b] text-white">
       <div className="max-w-6xl mx-auto pt-32 px-6 pb-20">
@@ -43,6 +49,7 @@ export default async function ReviewDetailPage({ params }) {
           review={review}
           game={game || { name: review.game_title, cover: { url: '' } }}
           profile={profile}
+          isOwnReview={isOwnReview}
         />
       </div>
     </main>

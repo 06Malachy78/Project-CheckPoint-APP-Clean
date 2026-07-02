@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+import { parseApiResponse } from '@/lib/api-client';
 
-export default function ReviewCard({ review, showActions = false }) {
+export default function ReviewCard({ review, showActions = false, likesCount = null }) {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,43 +28,20 @@ export default function ReviewCard({ review, showActions = false }) {
     setErrorMessage('');
     setIsDeleting(true);
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const response = await fetch(`/api/reviews/${review.id}`, {
+      method: 'DELETE',
+    });
 
-    if (userError || !user) {
-      setErrorMessage('Unable to confirm your session. Please sign in again.');
-      setIsDeleting(false);
-      return;
-    }
+    const result = await parseApiResponse(response);
 
-    if (user.id !== review.user_id) {
-      setErrorMessage('You can only delete your own reviews.');
-      setIsDeleting(false);
-      return;
-    }
-
-    const { error: deleteLikesError } = await supabase
-      .from('review_likes')
-      .delete()
-      .eq('review_id', review.id);
-
-    if (deleteLikesError) {
-      setErrorMessage(deleteLikesError.message || 'Unable to delete related like records. Please try again.');
-      setIsDeleting(false);
-      return;
-    }
-
-    const { error: reviewError } = await supabase.from('reviews').delete().eq('id', review.id);
-
-    if (reviewError) {
-      setErrorMessage(reviewError.message || 'Unable to delete review.');
+    if (!response.ok) {
+      setErrorMessage(result.error || 'Unable to delete review.');
       setIsDeleting(false);
       return;
     }
 
     setIsDeleted(true);
+    router.refresh();
   };
 
   const handleEditSave = async (e) => {
@@ -72,30 +51,21 @@ export default function ReviewCard({ review, showActions = false }) {
     setErrorMessage('');
     setIsSavingEdit(true);
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const response = await fetch(`/api/reviews/${review.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: editedContent,
+        rating: editedRating,
+      }),
+    });
 
-    if (userError || !user) {
-      setErrorMessage('Unable to confirm your session. Please sign in again.');
-      setIsSavingEdit(false);
-      return;
-    }
+    const result = await parseApiResponse(response);
 
-    if (user.id !== review.user_id) {
-      setErrorMessage('You can only edit your own reviews.');
-      setIsSavingEdit(false);
-      return;
-    }
-
-    const { error: reviewError } = await supabase
-      .from('reviews')
-      .update({ content: editedContent, rating: editedRating })
-      .eq('id', review.id);
-
-    if (reviewError) {
-      setErrorMessage(reviewError.message || 'Unable to save changes.');
+    if (!response.ok) {
+      setErrorMessage(result.error || 'Unable to save changes.');
       setIsSavingEdit(false);
       return;
     }
@@ -103,53 +73,13 @@ export default function ReviewCard({ review, showActions = false }) {
     setIsEditing(false);
     setIsMenuOpen(false);
     setIsSavingEdit(false);
+    router.refresh();
   };
 
   if (isDeleted) return null;
 
   return (
     <div className="relative group">
-      {showActions && (
-        <div className="absolute right-3 top-3 z-10">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsMenuOpen((current) => !current);
-            }}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 border border-zinc-800 text-zinc-300 hover:text-white transition"
-          >
-            ⋯
-          </button>
-
-          {isMenuOpen && (
-            <div className="mt-2 w-40 rounded-2xl border border-zinc-800 bg-zinc-950 p-1 shadow-xl shadow-black/30">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsEditing(true);
-                  setIsMenuOpen(false);
-                }}
-                className="w-full text-left rounded-xl px-3 py-2 text-xs uppercase tracking-[0.2em] font-bold text-zinc-100 hover:bg-zinc-900"
-              >
-                Edit review
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="w-full text-left rounded-xl px-3 py-2 text-xs uppercase tracking-[0.2em] font-bold text-red-400 hover:bg-zinc-900 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isDeleting ? 'Deleting…' : 'Delete review'}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       {isEditing ? (
         <form onSubmit={handleEditSave} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl transition-all duration-200">
           <div className="flex flex-col gap-4">
@@ -214,17 +144,69 @@ export default function ReviewCard({ review, showActions = false }) {
       ) : (
         <Link href={`/review/${review.id}`} className="block transition-all duration-200 hover:opacity-90">
           <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl transition-all duration-200 hover:border-[#00FF88]/50 hover:shadow-[0_0_0_1px_rgba(0,255,136,0.22)]">
-            <div className="flex justify-between items-start mb-2 gap-4">
-              <div className="min-w-0">
-                <h3 className="font-bold text-white uppercase tracking-tighter text-sm truncate">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="min-w-0 flex flex-col items-start gap-1.5 pr-1 sm:flex-row sm:items-center sm:gap-3">
+                <h3 className="font-bold text-white uppercase tracking-tighter text-sm break-words sm:truncate">
                   {review.game_title}
                 </h3>
+                <span className="inline-flex items-center gap-1.5 text-[#00FF88] font-black text-xs sm:shrink-0">
+                  <span className="text-yellow-400">★</span>
+                  {review.rating} / 5
+                </span>
+                {typeof likesCount === 'number' && (
+                  <span className="inline-flex items-center gap-1 text-zinc-400 font-bold text-xs sm:shrink-0">
+                    <span className="text-[#00FF88]">❤</span>
+                    {likesCount}
+                  </span>
+                )}
               </div>
-              <span className="inline-flex items-center gap-2 text-[#00FF88] font-black text-xs">
-                <span className="text-yellow-400">★</span>
-                {review.rating} / 5
-              </span>
+
+              {showActions && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <div
+                    className={`overflow-hidden transition-all duration-200 ease-out ${isMenuOpen ? 'max-w-44 opacity-100' : 'max-w-0 opacity-0 pointer-events-none'}`}
+                    aria-hidden={!isMenuOpen}
+                  >
+                    <div className="inline-flex items-center gap-1 rounded-2xl border border-zinc-800 bg-zinc-950 p-1 shadow-xl shadow-black/30">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsEditing(true);
+                          setIsMenuOpen(false);
+                        }}
+                        className="rounded-xl px-3 py-2 text-xs uppercase tracking-[0.16em] font-bold text-zinc-100 hover:bg-zinc-900 whitespace-nowrap"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="rounded-xl px-3 py-2 text-xs uppercase tracking-[0.16em] font-bold text-red-400 hover:bg-zinc-900 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {isDeleting ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsMenuOpen((current) => !current);
+                    }}
+                    aria-expanded={isMenuOpen}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 border border-zinc-800 text-zinc-300 hover:text-white transition"
+                  >
+                    ⋯
+                  </button>
+                </div>
+              )}
             </div>
+
             <p className={`text-zinc-400 text-sm italic leading-6 transition-all duration-200 break-words ${expanded ? '' : 'line-clamp-3'}`}>
               "{review.content}"
             </p>

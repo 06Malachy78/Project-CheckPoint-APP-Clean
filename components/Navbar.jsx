@@ -163,7 +163,7 @@ export default function Navbar({ initialUser = null }) {
             )}
           </div>
 
-          <div className="ml-auto sm:ml-0 order-2 sm:order-3 flex items-center gap-3 sm:gap-6">
+          <div className="ml-auto order-2 sm:order-3 flex items-center gap-3 sm:gap-6">
             {/* 🔥 2. ALTERED AUTHENTICATED LINKS BLOCK */}
             {user ? (
               <>

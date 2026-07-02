@@ -12,6 +12,17 @@ export default function GameReviewCard({ review }) {
               {review.username?.charAt(0) || 'U'}
             </div>
             <span className="text-zinc-100 font-bold truncate">{review.username}</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-950 border border-zinc-800 px-2 py-1 text-[10px] font-semibold text-zinc-300">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-3.5 w-3.5 text-[#00FF88]"
+                aria-hidden="true"
+                fill="currentColor"
+              >
+                <path d="M12 20.4c-.3 0-.6-.1-.8-.3C6.5 16 3.5 13.2 3.5 9.8 3.5 7.1 5.6 5 8.3 5c1.5 0 2.9.7 3.7 1.9C12.8 5.7 14.2 5 15.7 5c2.7 0 4.8 2.1 4.8 4.8 0 3.4-3 6.2-7.7 10.3-.2.2-.5.3-.8.3z" />
+              </svg>
+              {review.like_count ?? 0}
+            </span>
           </div>
 
           <div className="flex gap-1">

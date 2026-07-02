@@ -20,6 +20,7 @@ export default async function UserProfilePage({ params }) {
 
   const reviewIds = (reviews ?? []).map((review) => review.id);
   let totalLikes = 0;
+  const likesByReviewId = {};
 
   if (reviewIds.length > 0) {
     const { data: likeRows, error: likesError } = await supabase
@@ -31,6 +32,9 @@ export default async function UserProfilePage({ params }) {
       console.error('Unable to load total likes for profile:', likesError.message);
     } else {
       totalLikes = likeRows?.length ?? 0;
+      for (const row of likeRows || []) {
+        likesByReviewId[row.review_id] = (likesByReviewId[row.review_id] || 0) + 1;
+      }
     }
   }
 
@@ -89,7 +93,13 @@ export default async function UserProfilePage({ params }) {
             )}
           </div>
           <div className="space-y-4">
-            {reviews.length > 0 && reviews.map((review) => <ReviewCard key={review.id} review={review} />)}
+            {reviews.length > 0 && reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                likesCount={likesByReviewId[review.id] || 0}
+              />
+            ))}
           </div>
         </section>
       </main>

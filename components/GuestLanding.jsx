@@ -128,17 +128,6 @@ export default function GuestLanding({ totalCheckpoints, trendingGames = [] }) {
         onClose={() => setIsAuthModalOpen(false)}
         initialMode="signup"
       />
-
-      <style jsx>{`
-        @keyframes scroll-y {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-50%); }
-        }
-
-        .animate-scroll-y {
-          animation: scroll-y 26s linear infinite;
-        }
-      `}</style>
     </>
   );
 }

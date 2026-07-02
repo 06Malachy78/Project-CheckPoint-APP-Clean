@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { parseApiResponse } from '@/lib/api-client';
 
 export default function LogModal({ game, isOpen, onClose }) {
   const [rating, setRating] = useState(0);
@@ -16,29 +16,27 @@ export default function LogModal({ game, isOpen, onClose }) {
     setIsSaving(true);
     
     try {
-      // 1. Get the current active user ID from the client instance
-      const { data: { user } } = await supabase.auth.getUser();
-      
       const rawUrl = game.cover?.url || '';
       const cleanCoverUrl = rawUrl.startsWith('//') ? `https:${rawUrl}` : rawUrl;
 
-      // 2. Insert the row attaching their user_id value
-      const { error } = await supabase
-        .from('reviews')
-        .insert([
-            { 
-            user_id: user?.id, // 👈 CRITICAL: This links the review to your profile!
-            game_id: game.id.toString(), 
-            game_title: game.name, 
-              username: user?.email?.split('@')[0] || "dave", 
-            rating: rating, 
-            content: review,
-            cover_url: cleanCoverUrl 
-          }
-        ]);
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameId: game.id,
+          gameTitle: game.name,
+          rating,
+          content: review,
+          coverUrl: cleanCoverUrl,
+        }),
+      });
 
-      if (error) {
-        alert("Supabase API Error: " + error.message);
+      const result = await parseApiResponse(response);
+
+      if (!response.ok) {
+        alert("Checkpoint save failed: " + (result.error || 'Unknown error'));
       } else {
         alert("Checkpoint Logged!");
         onClose();

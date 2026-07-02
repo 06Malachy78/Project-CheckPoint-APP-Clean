@@ -1,7 +1,8 @@
 import { fetchGameData } from '../../../lib/igdb';
 import { createClient } from '../../../lib/server';
 import GamePageClient from './GamePageClient';
-import GameReviewCard from '../../../components/GameReviewCard';
+import GameReviewFeed from '../../../components/GameReviewFeed';
+import GameCoverCard from '../../../components/GameCoverCard';
 
 
 export default async function GamePage({ params }) {
@@ -11,11 +12,36 @@ export default async function GamePage({ params }) {
 //test
 
   // 2. Fetch reviews for this specific game ID from Supabaseee
-  const { data: reviews } = await supabase
+  const { data: rawReviews } = await supabase
     .from('reviews')
     .select('*')
     .eq('game_id', id.toString())
     .order('created_at', { ascending: false });
+
+  let reviewLikeCounts = {};
+
+  if ((rawReviews ?? []).length > 0) {
+    const reviewIds = rawReviews.map((review) => review.id);
+
+    const { data: likeRows, error: likesError } = await supabase
+      .from('review_likes')
+      .select('review_id')
+      .in('review_id', reviewIds);
+
+    if (likesError) {
+      console.error('Unable to load game page like counts:', likesError.message);
+    } else {
+      reviewLikeCounts = (likeRows ?? []).reduce((acc, row) => {
+        acc[row.review_id] = (acc[row.review_id] ?? 0) + 1;
+        return acc;
+      }, {});
+    }
+  }
+
+  const reviews = (rawReviews ?? []).map((review) => ({
+    ...review,
+    like_count: reviewLikeCounts[review.id] ?? 0,
+  }));
 
   if (!game) return <div className="text-white p-20">Game not found</div>;
 
@@ -31,11 +57,7 @@ export default async function GamePage({ params }) {
           
           {/* Left Column: Game Poster */}
           <div className="w-full md:sticky md:top-32">
-            <img 
-              src={finalCover} 
-              alt={game.name} 
-              className="w-full max-w-sm mx-auto md:max-w-none rounded-2xl shadow-2xl border border-zinc-800 shadow-black/50"
-            />
+            <GameCoverCard src={finalCover} alt={game.name} />
           </div>
 
           {/* Right Column: Game Details */}
@@ -70,17 +92,7 @@ export default async function GamePage({ params }) {
                 Recent Checkpoints
               </h3>
               
-              <div className="space-y-6">
-                {reviews && reviews.length > 0 ? (
-                  reviews.map((review) => <GameReviewCard key={review.id} review={review} />)
-                ) : (
-                  <div className="py-10 text-center border-2 border-dashed border-zinc-900 rounded-3xl">
-                    <p className="text-zinc-600 font-medium italic">
-                      No one has reached this checkpoint yet. Be the first to log it!
-                    </p>  
-                  </div>
-                )}
-              </div>
+              <GameReviewFeed reviews={reviews} />
             </div>
             {/* End Reviews Section */}
             
