@@ -30,7 +30,7 @@ export async function GET(request) {
   if (gameId) {
     const { data, error } = await supabase
       .from('game_statuses')
-      .select('status')
+      .select('status, replay_count')
       .eq('user_id', user.id)
       .eq('game_id', gameId)
       .maybeSingle();
@@ -39,12 +39,15 @@ export async function GET(request) {
       return NextResponse.json({ error: error.message || 'Unable to load game status.' }, { status: 500 });
     }
 
-    return NextResponse.json({ status: data?.status ?? null });
+    return NextResponse.json({
+      status: data?.status ?? null,
+      replayCount: typeof data?.replay_count === 'number' ? data.replay_count : 0,
+    });
   }
 
   const { data, error } = await supabase
     .from('game_statuses')
-    .select('game_id, game_name, game_cover, status, updated_at')
+    .select('game_id, game_name, game_cover, status, replay_count, updated_at')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
 

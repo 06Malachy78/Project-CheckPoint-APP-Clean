@@ -55,7 +55,7 @@ export default function LogModal({ game, isOpen, onClose }) {
         <div className="flex justify-between items-start mb-6">
           <div>
             <h2 className="text-xl font-bold text-zinc-100">Log {game?.name}</h2>
-            <p className="text-zinc-500 text-sm">What did you think of this checkpoint?</p>
+            <p className="text-zinc-500 text-sm">What did you think of this game?</p>
           </div>
           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-100 text-2xl">&times;</button>
         </div>

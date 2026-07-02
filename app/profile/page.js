@@ -4,6 +4,7 @@ import GameCard from '@/components/GameCard';
 import TopGamesEditor from '@/components/TopGamesEditor';
 import ReviewCard from '@/components/ReviewCard.jsx';
 import ProfileGameStatusEditor from '@/components/ProfileGameStatusEditor';
+import ReplayGamesSection from '@/components/ReplayGamesSection';
 import { groupGameStatuses } from '@/lib/game-statuses';
 
 export default async function ProfilePage() {
@@ -33,7 +34,7 @@ export default async function ProfilePage() {
 
   const { data: gameStatusRows, error: gameStatusError } = await supabase
     .from('game_statuses')
-    .select('game_id, game_name, game_cover, status, updated_at')
+    .select('game_id, game_name, game_cover, status, replay_count, updated_at')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
 
@@ -41,7 +42,23 @@ export default async function ProfilePage() {
     console.error('Unable to load profile game statuses:', gameStatusError.message);
   }
 
-  const groupedStatuses = groupGameStatuses(gameStatusRows || []);
+  const safeStatusRows = gameStatusRows || [];
+  const groupedStatuses = groupGameStatuses(safeStatusRows);
+  const replayGames = safeStatusRows
+    .filter((row) => (row.replay_count || 0) > 0)
+    .sort((a, b) => (b.replay_count || 0) - (a.replay_count || 0))
+    .map((row) => ({
+      id: row.game_id,
+      name: row.game_name,
+      cover: row.game_cover,
+      replayCount: row.replay_count || 0,
+    }));
+
+  const totalGamesPlayed = new Set(
+    safeStatusRows
+      .filter((row) => ['playing', 'finished'].includes(row.status) || (row.replay_count || 0) > 0)
+      .map((row) => row.game_id)
+  ).size;
   const reviewIds = reviews.map((review) => review.id);
   const likesByReviewId = {};
 
@@ -77,6 +94,10 @@ export default async function ProfilePage() {
             <span className="text-[#00FF88]">❤</span>
             {totalLikesReceived} total {totalLikesReceived === 1 ? 'like' : 'likes'}
           </p>
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
+            <span className="text-[#00FF88]">GP</span>
+            {totalGamesPlayed} total {totalGamesPlayed === 1 ? 'game played' : 'games played'}
+          </p>
         </section>
 
       {/* Top 3 Games Section */}
@@ -93,6 +114,8 @@ export default async function ProfilePage() {
         </div>
         <ProfileGameStatusEditor groupedStatuses={groupedStatuses} />
       </section>
+
+      <ReplayGamesSection replayGames={replayGames} />
 
       {/* User Reviews Section */}
       <section>

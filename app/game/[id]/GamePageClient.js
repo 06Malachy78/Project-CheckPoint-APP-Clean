@@ -11,13 +11,15 @@ const STATUS_OPTIONS = [
   { value: 'finished', label: 'Finished' },
 ];
 
-export default function GamePageClient({ game, initialStatus = null }) {
+export default function GamePageClient({ game, initialStatus = null, initialReplayCount = 0 }) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isAuthOpen, setAuthOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
+  const [replayCount, setReplayCount] = useState(initialReplayCount);
   const [isSavingStatus, setIsSavingStatus] = useState(false);
+  const [isSavingReplay, setIsSavingReplay] = useState(false);
 
   const handleOpenLog = useCallback(async () => {
     setIsCheckingAuth(true);
@@ -88,6 +90,49 @@ export default function GamePageClient({ game, initialStatus = null }) {
     setIsSavingStatus(false);
   }, [game.cover, game.id, game.name, isSavingStatus]);
 
+  const handleReplayChange = useCallback(async (nextReplayCount) => {
+    if (isSavingReplay || nextReplayCount < 0) return;
+
+    setIsSavingReplay(true);
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      setIsSavingReplay(false);
+      setAuthMode('signup');
+      setAuthOpen(true);
+      return;
+    }
+
+    const response = await fetch('/api/profile/game-replay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        replayCount: nextReplayCount,
+        game: {
+          id: game.id,
+          name: game.name,
+          cover: game.cover ?? null,
+        },
+      }),
+    });
+
+    const result = await parseApiResponse(response);
+
+    if (!response.ok) {
+      alert(result.error || 'Unable to update replay tracking.');
+    } else {
+      setReplayCount(result.replayCount ?? nextReplayCount);
+    }
+
+    setIsSavingReplay(false);
+  }, [game.cover, game.id, game.name, isSavingReplay]);
+
   return (
     <>
       <div className="flex flex-col gap-4 max-w-3xl">
@@ -133,6 +178,38 @@ export default function GamePageClient({ game, initialStatus = null }) {
               ? `Current status: ${STATUS_OPTIONS.find((option) => option.value === selectedStatus)?.label || selectedStatus}`
               : 'No status set yet'}
           </p>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-500 mb-3">
+            Replay tracking
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleReplayChange(Math.max(0, replayCount - 1))}
+              disabled={isSavingReplay || replayCount === 0}
+              className="h-7 w-7 rounded-full border border-zinc-800 bg-zinc-900 text-zinc-300 font-black hover:text-white disabled:opacity-50"
+              aria-label="Decrease replay count"
+            >
+              -
+            </button>
+
+            <span className="min-w-[80px] text-center text-[11px] font-black uppercase tracking-[0.2em] text-zinc-200">
+              {replayCount} {replayCount === 1 ? 'Replay' : 'Replays'}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => handleReplayChange(replayCount + 1)}
+              disabled={isSavingReplay}
+              className="h-7 w-7 rounded-full border border-zinc-800 bg-zinc-900 text-zinc-300 font-black hover:text-white disabled:opacity-50"
+              aria-label="Increase replay count"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
 

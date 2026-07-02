@@ -2,6 +2,7 @@
 import GameCard from '@/components/GameCard';
 import ReviewCard from '@/components/ReviewCard';
 import ProfileGameStatusSections from '@/components/ProfileGameStatusSections';
+import ReplayGamesSection from '@/components/ReplayGamesSection';
 import {
   groupGameStatuses,
   DEFAULT_STATUS_VISIBILITY,
@@ -27,7 +28,7 @@ export default async function UserProfilePage({ params }) {
   if (profile?.id) {
     const { data, error: gameStatusError } = await supabase
       .from('game_statuses')
-      .select('game_id, game_name, game_cover, status, updated_at')
+      .select('game_id, game_name, game_cover, status, replay_count, updated_at')
       .eq('user_id', profile.id)
       .order('updated_at', { ascending: false });
 
@@ -61,8 +62,24 @@ export default async function UserProfilePage({ params }) {
   if (!profile)
     return <p className="pt-32 text-center text-zinc-500 uppercase tracking-widest text-xs">User not found.</p>;
 
+  const safeStatusRows = gameStatusRows || [];
   const topGames = [profile.top_game_1, profile.top_game_2, profile.top_game_3].filter(Boolean);
-  const groupedStatuses = groupGameStatuses(gameStatusRows);
+  const groupedStatuses = groupGameStatuses(safeStatusRows);
+  const replayGames = safeStatusRows
+    .filter((row) => (row.replay_count || 0) > 0)
+    .sort((a, b) => (b.replay_count || 0) - (a.replay_count || 0))
+    .map((row) => ({
+      id: row.game_id,
+      name: row.game_name,
+      cover: row.game_cover,
+      replayCount: row.replay_count || 0,
+    }));
+
+  const totalGamesPlayed = new Set(
+    safeStatusRows
+      .filter((row) => ['playing', 'finished'].includes(row.status) || (row.replay_count || 0) > 0)
+      .map((row) => row.game_id)
+  ).size;
 
   return (
     <>
@@ -83,6 +100,12 @@ export default async function UserProfilePage({ params }) {
             </svg>
             <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
               {totalLikes} total {totalLikes === 1 ? 'like' : 'likes'}
+            </span>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
+            <span className="text-xs uppercase tracking-[0.2em] font-black text-[#00FF88]">GP</span>
+            <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
+              {totalGamesPlayed} total {totalGamesPlayed === 1 ? 'game played' : 'games played'}
             </span>
           </div>
         </div>
@@ -112,6 +135,8 @@ export default async function UserProfilePage({ params }) {
           </div>
           <ProfileGameStatusSections groupedStatuses={groupedStatuses} visibility={DEFAULT_STATUS_VISIBILITY} />
         </section>
+
+        <ReplayGamesSection replayGames={replayGames} />
 
         <section>
           <div className="flex items-center justify-between gap-4 mb-6">

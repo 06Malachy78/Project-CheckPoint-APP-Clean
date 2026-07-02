@@ -15,11 +15,12 @@ export default async function GamePage({ params }) {
   } = await supabase.auth.getUser();
 
   let initialStatus = null;
+  let initialReplayCount = 0;
 
   if (user) {
     const { data: statusRow, error: statusError } = await supabase
       .from('game_statuses')
-      .select('status')
+      .select('status, replay_count')
       .eq('user_id', user.id)
       .eq('game_id', id.toString())
       .maybeSingle();
@@ -28,6 +29,7 @@ export default async function GamePage({ params }) {
       console.error('Unable to load game status:', statusError.message);
     } else {
       initialStatus = statusRow?.status ?? null;
+      initialReplayCount = typeof statusRow?.replay_count === 'number' ? statusRow.replay_count : 0;
     }
   }
 
@@ -94,7 +96,7 @@ export default async function GamePage({ params }) {
             </header>
 
             <div className="py-2">
-              <GamePageClient game={game} initialStatus={initialStatus} />
+              <GamePageClient game={game} initialStatus={initialStatus} initialReplayCount={initialReplayCount} />
             </div>
 
             <div className="border-t border-zinc-800 pt-8">
