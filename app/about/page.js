@@ -11,8 +11,8 @@ export default function AboutPage() {
       <section className="mb-12">
         <h1 className="text-4xl font-black uppercase tracking-tighter text-white mb-4">About CHECKPOINT</h1>
         <p className="text-zinc-400 max-w-3xl leading-8">
-          CHECKPOINT is a community hub for gamers who want to discover new titles, save their favorite games, and share honest reviews.
-          Whether you're exploring classics or the latest releases, the site helps you organize your top picks and keep a personal record.
+          CHECKPOINT is a community hub for gamers who want to discover new titles, save their favourite games, and share honest reviews.
+          Whether you're exploring classics or the latest releases, the site helps you organise your top picks and keep a personal record.
         </p>
         <p className="text-zinc-500 mt-6 text-sm">
           Built by <a href="https://www.linkedin.com/in/malachy-hearnden-84a0aa282" target="_blank" rel="noopener noreferrer" className="text-[#00FF88] font-semibold hover:underline">Malachy Hearnden</a> as a personal gaming journal and review destination.
@@ -38,16 +38,16 @@ export default function AboutPage() {
         </div>
 
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900/80 p-8 shadow-sm">
-          <h2 className="text-2xl font-black text-white mb-4">Save Favorites</h2>
+          <h2 className="text-2xl font-black text-white mb-4">Save Favourites</h2>
           <p className="text-zinc-400 leading-7">
-            Keep track of your all-time favorite titles with a dedicated profile section for your top games and most-loved plays.
+            Keep track of your all-time favourite titles with a dedicated profile section for your top games and most-loved plays.
           </p>
         </div>
 
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900/80 p-8 shadow-sm">
-          <h2 className="text-2xl font-black text-white mb-4">Personalized</h2>
+          <h2 className="text-2xl font-black text-white mb-4">Personalised</h2>
           <p className="text-zinc-400 leading-7">
-            Your profile is your space to display your username, favorite games, and review history, making the site personal and fun.
+            Your profile is your space to display your username, favourite games, and review history, making the site personal and fun.
           </p>
         </div>
       </section>

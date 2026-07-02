@@ -46,7 +46,7 @@ export default function GuestLanding({ totalCheckpoints, trendingGames = [] }) {
               Track the games you love, write the reviews that matter, and keep your own gaming history.
             </h1>
             <p className="text-zinc-400 text-base sm:text-lg leading-7 sm:leading-8 mb-7 sm:mb-8">
-              CHECKPOINT helps you discover new titles, save favorites, and connect your playthroughs with honest community reviews. Create an account to personalize your profile, save top games, and join the conversation.
+              CHECKPOINT helps you discover new titles, save favourites, and connect your playthroughs with honest community reviews. Create an account to personalise your profile, save top games, and join the conversation.
             </p>
 
             <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
@@ -68,7 +68,7 @@ export default function GuestLanding({ totalCheckpoints, trendingGames = [] }) {
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-6">
                 <h2 className="text-sm uppercase tracking-[0.15em] sm:tracking-[0.3em] font-black text-zinc-400 mb-3">Find new games</h2>
-                <p className="text-zinc-500 text-sm leading-6">Search the latest releases and discover community favorites all in one place.</p>
+                <p className="text-zinc-500 text-sm leading-6">Search the latest releases and discover community favourites all in one place.</p>
               </div>
               <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-6">
                 <h2 className="text-sm uppercase tracking-[0.15em] sm:tracking-[0.3em] font-black text-zinc-400 mb-3">Write reviews</h2>
@@ -76,7 +76,7 @@ export default function GuestLanding({ totalCheckpoints, trendingGames = [] }) {
               </div>
               <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-6">
                 <h2 className="text-sm uppercase tracking-[0.15em] sm:tracking-[0.3em] font-black text-zinc-400 mb-3">Join the community</h2>
-                <p className="text-zinc-500 text-sm leading-6">Save favorites, follow activity, and build your profile with a personal touch.</p>
+                <p className="text-zinc-500 text-sm leading-6">Save favourites, follow activity, and build your profile with a personal touch.</p>
               </div>
             </div>
 

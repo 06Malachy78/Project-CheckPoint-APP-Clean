@@ -1,6 +1,11 @@
 ﻿import { createClient } from '../../../lib/server';
 import GameCard from '@/components/GameCard';
 import ReviewCard from '@/components/ReviewCard';
+import ProfileGameStatusSections from '@/components/ProfileGameStatusSections';
+import {
+  groupGameStatuses,
+  DEFAULT_STATUS_VISIBILITY,
+} from '@/lib/game-statuses';
 
 export default async function UserProfilePage({ params }) {
   const supabase = await createClient();
@@ -17,6 +22,21 @@ export default async function UserProfilePage({ params }) {
     .select('*')
     .eq('username', username)
     .order('created_at', { ascending: false });
+
+  let gameStatusRows = [];
+  if (profile?.id) {
+    const { data, error: gameStatusError } = await supabase
+      .from('game_statuses')
+      .select('game_id, game_name, game_cover, status, updated_at')
+      .eq('user_id', profile.id)
+      .order('updated_at', { ascending: false });
+
+    if (gameStatusError) {
+      console.error('Unable to load public profile game statuses:', gameStatusError.message);
+    } else {
+      gameStatusRows = data || [];
+    }
+  }
 
   const reviewIds = (reviews ?? []).map((review) => review.id);
   let totalLikes = 0;
@@ -42,6 +62,7 @@ export default async function UserProfilePage({ params }) {
     return <p className="pt-32 text-center text-zinc-500 uppercase tracking-widest text-xs">User not found.</p>;
 
   const topGames = [profile.top_game_1, profile.top_game_2, profile.top_game_3].filter(Boolean);
+  const groupedStatuses = groupGameStatuses(gameStatusRows);
 
   return (
     <>
@@ -83,6 +104,13 @@ export default async function UserProfilePage({ params }) {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="mb-16">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <h2 className="text-lg font-black uppercase tracking-widest text-zinc-400">Game Status</h2>
+          </div>
+          <ProfileGameStatusSections groupedStatuses={groupedStatuses} visibility={DEFAULT_STATUS_VISIBILITY} />
         </section>
 
         <section>

@@ -9,7 +9,27 @@ export default async function GamePage({ params }) {
   const { id } = await params;
   const game = await fetchGameData(id);
   const supabase = await createClient();
-//test
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let initialStatus = null;
+
+  if (user) {
+    const { data: statusRow, error: statusError } = await supabase
+      .from('game_statuses')
+      .select('status')
+      .eq('user_id', user.id)
+      .eq('game_id', id.toString())
+      .maybeSingle();
+
+    if (statusError) {
+      console.error('Unable to load game status:', statusError.message);
+    } else {
+      initialStatus = statusRow?.status ?? null;
+    }
+  }
 
   // 2. Fetch reviews for this specific game ID from Supabaseee
   const { data: rawReviews } = await supabase
@@ -74,7 +94,7 @@ export default async function GamePage({ params }) {
             </header>
 
             <div className="py-2">
-              <GamePageClient game={game} />
+              <GamePageClient game={game} initialStatus={initialStatus} />
             </div>
 
             <div className="border-t border-zinc-800 pt-8">

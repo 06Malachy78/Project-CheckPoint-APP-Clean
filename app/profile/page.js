@@ -3,6 +3,8 @@ import { createClient } from '../../lib/server';
 import GameCard from '@/components/GameCard';
 import TopGamesEditor from '@/components/TopGamesEditor';
 import ReviewCard from '@/components/ReviewCard.jsx';
+import ProfileGameStatusEditor from '@/components/ProfileGameStatusEditor';
+import { groupGameStatuses } from '@/lib/game-statuses';
 
 export default async function ProfilePage() {
   const supabase = await createClient(); 
@@ -28,6 +30,18 @@ export default async function ProfilePage() {
 
   const profile = profileResponse.data;
   const reviews = reviewsResponse.data || [];
+
+  const { data: gameStatusRows, error: gameStatusError } = await supabase
+    .from('game_statuses')
+    .select('game_id, game_name, game_cover, status, updated_at')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false });
+
+  if (gameStatusError) {
+    console.error('Unable to load profile game statuses:', gameStatusError.message);
+  }
+
+  const groupedStatuses = groupGameStatuses(gameStatusRows || []);
   const reviewIds = reviews.map((review) => review.id);
   const likesByReviewId = {};
 
@@ -71,6 +85,13 @@ export default async function ProfilePage() {
           Top 3 All-Time
         </h2>
         <TopGamesEditor profile={profile} userId={user.id} />
+      </section>
+
+      <section className="mb-16">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <h2 className="text-lg font-black uppercase tracking-widest text-zinc-400">My Game Status</h2>
+        </div>
+        <ProfileGameStatusEditor groupedStatuses={groupedStatuses} />
       </section>
 
       {/* User Reviews Section */}
