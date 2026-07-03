@@ -5,6 +5,7 @@ import TopGamesEditor from '@/components/TopGamesEditor';
 import ReviewCard from '@/components/ReviewCard.jsx';
 import ProfileGameStatusEditor from '@/components/ProfileGameStatusEditor';
 import ReplayGamesSection from '@/components/ReplayGamesSection';
+import ProfileHeader from '@/components/ProfileHeader';
 import { groupGameStatuses } from '@/lib/game-statuses';
 
 export default async function ProfilePage() {
@@ -85,20 +86,7 @@ export default async function ProfilePage() {
   return (
     <>
       <main className="max-w-4xl mx-auto pt-32 px-6 pb-20">
-        <section className="mb-16 border-b border-zinc-900 pb-10">
-          <h1 className="text-4xl font-black mb-2 uppercase tracking-tighter text-white">My Profile</h1>
-          <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-            {profile?.username || user.email}
-          </p>
-          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
-            <span className="text-[#00FF88]">❤</span>
-            {totalLikesReceived} total {totalLikesReceived === 1 ? 'like' : 'likes'}
-          </p>
-          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
-            <span className="text-[#00FF88]">GP</span>
-            {totalGamesPlayed} total {totalGamesPlayed === 1 ? 'game played' : 'games played'}
-          </p>
-        </section>
+        <ProfileHeader profile={profile} user={user} totalGamesPlayed={totalGamesPlayed} />
 
       {/* Top 3 Games Section */}
       <section className="mb-16">
@@ -119,7 +107,13 @@ export default async function ProfilePage() {
 
       {/* User Reviews Section */}
       <section>
-        <h2 className="text-lg font-black mb-6 uppercase tracking-widest text-zinc-400">My Reviews</h2>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-black uppercase tracking-widest text-zinc-400">My Reviews</h2>
+          <p className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
+            <span className="text-[#00FF88]">❤</span>
+            {totalLikesReceived} total {totalLikesReceived === 1 ? 'like' : 'likes'}
+          </p>
+        </div>
         <div className="space-y-4">
           {reviews.length > 0 ? (
             reviews.map((review) => (

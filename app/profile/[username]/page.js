@@ -1,16 +1,19 @@
 ﻿import { createClient } from '../../../lib/server';
+import { createAdminClient } from '../../../lib/admin';
 import GameCard from '@/components/GameCard';
 import ReviewCard from '@/components/ReviewCard';
 import ProfileGameStatusSections from '@/components/ProfileGameStatusSections';
 import ReplayGamesSection from '@/components/ReplayGamesSection';
-import {
-  groupGameStatuses,
-  DEFAULT_STATUS_VISIBILITY,
-} from '@/lib/game-statuses';
+import { groupGameStatuses } from '@/lib/game-statuses';
 
 export default async function UserProfilePage({ params }) {
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
   const { username } = params;
+
+  const {
+    data: { user: viewerUser },
+  } = await supabase.auth.getUser();
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -26,7 +29,10 @@ export default async function UserProfilePage({ params }) {
 
   let gameStatusRows = [];
   if (profile?.id) {
-    const { data, error: gameStatusError } = await supabase
+    const canUseAdminForPublicRead = Boolean(adminSupabase) && viewerUser?.id !== profile.id;
+    const statusClient = canUseAdminForPublicRead ? adminSupabase : supabase;
+
+    const { data, error: gameStatusError } = await statusClient
       .from('game_statuses')
       .select('game_id, game_name, game_cover, status, replay_count, updated_at')
       .eq('user_id', profile.id)
@@ -81,29 +87,38 @@ export default async function UserProfilePage({ params }) {
       .map((row) => row.game_id)
   ).size;
 
+  const avatarUrl = profile.avatar_url || profile.avatar || profile.image_url || '';
+  const sharpAvatarUrl = avatarUrl
+    ? avatarUrl
+        .replace(/=s\d+-c$/i, '=s256-c')
+        .replace(/=s\d+$/i, '=s256')
+    : '';
+  const initials = (profile.username || 'U').slice(0, 2).toUpperCase();
+
   return (
     <>
       <main className="max-w-5xl mx-auto pt-28 px-6 pb-20">
         <div className="mb-14">
-          <h1 className="text-5xl font-black mb-3 uppercase tracking-tighter text-white">{profile.username}</h1>
-          <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-4">
-            {profile.bio || 'No bio yet.'}
-          </p>
-          <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4 text-[#00FF88]"
-              aria-hidden="true"
-              fill="currentColor"
-            >
-              <path d="M12 20.4c-.3 0-.6-.1-.8-.3C6.5 16 3.5 13.2 3.5 9.8 3.5 7.1 5.6 5 8.3 5c1.5 0 2.9.7 3.7 1.9C12.8 5.7 14.2 5 15.7 5c2.7 0 4.8 2.1 4.8 4.8 0 3.4-3 6.2-7.7 10.3-.2.2-.5.3-.8.3z" />
-            </svg>
-            <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
-              {totalLikes} total {totalLikes === 1 ? 'like' : 'likes'}
-            </span>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="h-[72px] w-[72px] overflow-hidden rounded-full border border-zinc-600 bg-zinc-900 ring-1 ring-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+              {sharpAvatarUrl ? (
+                <img src={sharpAvatarUrl} alt={`${profile.username} avatar`} className="h-full w-full object-cover object-center" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-lg font-black text-zinc-300">
+                  {initials}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tighter text-white">{profile.username}</h1>
+              <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mt-2">
+                {profile.bio || 'No bio yet.'}
+              </p>
+            </div>
           </div>
+
           <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
-            <span className="text-xs uppercase tracking-[0.2em] font-black text-[#00FF88]">GP</span>
             <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
               {totalGamesPlayed} total {totalGamesPlayed === 1 ? 'game played' : 'games played'}
             </span>
@@ -133,17 +148,33 @@ export default async function UserProfilePage({ params }) {
           <div className="flex items-center justify-between gap-4 mb-6">
             <h2 className="text-lg font-black uppercase tracking-widest text-zinc-400">Game Status</h2>
           </div>
-          <ProfileGameStatusSections groupedStatuses={groupedStatuses} visibility={DEFAULT_STATUS_VISIBILITY} />
+          <ProfileGameStatusSections groupedStatuses={groupedStatuses} />
         </section>
 
         <ReplayGamesSection replayGames={replayGames} />
 
         <section>
-          <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h2 className="text-lg font-black uppercase tracking-widest text-zinc-400">Reviews</h2>
-            {reviews.length === 0 && (
-              <span className="text-zinc-600 text-xs uppercase tracking-widest italic">No reviews yet.</span>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 text-[#00FF88]"
+                  aria-hidden="true"
+                  fill="currentColor"
+                >
+                  <path d="M12 20.4c-.3 0-.6-.1-.8-.3C6.5 16 3.5 13.2 3.5 9.8 3.5 7.1 5.6 5 8.3 5c1.5 0 2.9.7 3.7 1.9C12.8 5.7 14.2 5 15.7 5c2.7 0 4.8 2.1 4.8 4.8 0 3.4-3 6.2-7.7 10.3-.2.2-.5.3-.8.3z" />
+                </svg>
+                <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
+                  {totalLikes} total {totalLikes === 1 ? 'like' : 'likes'}
+                </span>
+              </div>
+
+              {reviews.length === 0 && (
+                <span className="text-zinc-600 text-xs uppercase tracking-widest italic">No reviews yet.</span>
+              )}
+            </div>
           </div>
           <div className="space-y-4">
             {reviews.length > 0 && reviews.map((review) => (

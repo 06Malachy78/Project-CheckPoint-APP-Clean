@@ -18,19 +18,10 @@ function getCoverUrl(game) {
 export default function ProfileGameStatusSections({ groupedStatuses, visibility }) {
   const PREVIEW_LIMIT = 7;
   const [expandedStatus, setExpandedStatus] = useState(null);
-  const visibleStates = GAME_STATUS_ORDER.filter((key) => visibility[key] !== false);
-
-  if (visibleStates.length === 0) {
-    return (
-      <p className="text-zinc-600 text-xs uppercase tracking-widest italic">
-        All status sections are hidden.
-      </p>
-    );
-  }
 
   return (
     <div className="space-y-10">
-      {visibleStates.map((statusKey) => {
+      {GAME_STATUS_ORDER.map((statusKey) => {
         const games = groupedStatuses[statusKey] || [];
         const previewGames = games.slice(0, PREVIEW_LIMIT);
         const hiddenCount = Math.max(0, games.length - PREVIEW_LIMIT);

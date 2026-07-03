@@ -11,6 +11,29 @@ export default function TopGamesEditor({ profile, userId }) {
   const [searchResults, setSearchResults] = useState([]);
   const router = useRouter();
 
+  const updateTopGameSlot = async (slotNumber, game) => {
+    const response = await fetch('/api/profile/top-games', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        slotNumber,
+        game,
+      }),
+    });
+
+    const result = await parseApiResponse(response);
+
+    if (!response.ok) {
+      alert(result.error || 'Unable to update top games.');
+      return false;
+    }
+
+    router.refresh();
+    return true;
+  };
+
   const handleSearch = async (query) => {
     setSearchQuery(query);
     if (query.length < 2) return setSearchResults([]);
@@ -25,31 +48,21 @@ export default function TopGamesEditor({ profile, userId }) {
   };
 
   const selectGame = async (game) => {
-    const response = await fetch('/api/profile/top-games', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        slotNumber: editingSlot,
-        game: {
-          id: game.id,
-          name: game.name,
-          cover: game.cover,
-        },
-      }),
+    const updated = await updateTopGameSlot(editingSlot, {
+      id: game.id,
+      name: game.name,
+      cover: game.cover,
     });
 
-    const result = await parseApiResponse(response);
-
-    if (!response.ok) {
-      alert(result.error || 'Unable to update top games.');
-    } else {
+    if (updated) {
       setEditingSlot(null);
       setSearchQuery('');
       setSearchResults([]);
-      router.refresh(); 
     }
+  };
+
+  const removeGame = async (slotNumber) => {
+    await updateTopGameSlot(slotNumber, null);
   };
 
   const slots = [profile?.top_game_1, profile?.top_game_2, profile?.top_game_3];
@@ -62,6 +75,18 @@ export default function TopGamesEditor({ profile, userId }) {
             {game ? (
               <>
                 <GameCard game={game} fit="contain" />
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    removeGame(i + 1);
+                  }}
+                  className="absolute top-2 right-2 z-20 h-6 w-6 rounded-full border border-zinc-700 bg-black/80 text-xs font-black text-zinc-300 transition-colors hover:border-[#00FF88] hover:text-[#00FF88]"
+                  aria-label={`Remove top game in slot ${i + 1}`}
+                  title="Remove game"
+                >
+                  x
+                </button>
                 <button 
                   onClick={() => setEditingSlot(i + 1)}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-black tracking-widest text-[#00FF88] uppercase"

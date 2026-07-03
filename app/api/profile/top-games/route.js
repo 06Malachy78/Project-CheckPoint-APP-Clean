@@ -23,18 +23,26 @@ export async function POST(request) {
   const slotNumber = Number(payload?.slotNumber);
   const game = payload?.game;
 
-  if (![1, 2, 3].includes(slotNumber) || !game?.id || !game?.name) {
+  if (![1, 2, 3].includes(slotNumber)) {
+    return NextResponse.json({ error: 'Invalid top game selection.' }, { status: 400 });
+  }
+
+  const isRemovingGame = game === null;
+
+  if (!isRemovingGame && (!game?.id || !game?.name)) {
     return NextResponse.json({ error: 'Invalid top game selection.' }, { status: 400 });
   }
 
   const updateField = `top_game_${slotNumber}`;
   const updateData = {
     id: user.id,
-    [updateField]: {
-      id: game.id,
-      name: game.name,
-      cover: game.cover ?? null,
-    },
+    [updateField]: isRemovingGame
+      ? null
+      : {
+          id: game.id,
+          name: game.name,
+          cover: game.cover ?? null,
+        },
     updated_at: new Date().toISOString(),
   };
 
