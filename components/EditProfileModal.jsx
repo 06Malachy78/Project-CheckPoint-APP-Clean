@@ -24,10 +24,12 @@ export default function EditProfileModal({ isOpen, onClose, profile, user }) {
   useEffect(() => {
     if (!isOpen) return;
 
+    const metadata = user?.user_metadata || {};
+
     setUsername((profile?.username || '').toLowerCase());
     setEmail(user?.email || '');
-    setBio(profile?.bio || '');
-    setAvatarUrl(profile?.avatar_url || profile?.avatar || profile?.image_url || '');
+    setBio(profile?.bio || metadata?.bio || '');
+    setAvatarUrl(profile?.avatar_url || profile?.avatar || profile?.image_url || metadata?.avatar_url || metadata?.picture || '');
     setMessage('');
     setErrorMessage('');
   }, [isOpen, profile, user]);
@@ -150,6 +152,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, user }) {
       data: {
         username: normalizedUsername,
         display_name: normalizedUsername,
+        bio: normalizedBio || null,
+        avatar_url: normalizedAvatarUrl || null,
       },
     };
 

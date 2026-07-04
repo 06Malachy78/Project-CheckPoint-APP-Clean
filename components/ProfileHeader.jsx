@@ -5,8 +5,9 @@ import EditProfileModal from '@/components/EditProfileModal';
 
 export default function ProfileHeader({ profile, user, totalGamesPlayed }) {
   const [isEditing, setIsEditing] = useState(false);
+  const metadata = user?.user_metadata || {};
 
-  const avatarUrl = profile?.avatar_url || profile?.avatar || profile?.image_url || '';
+  const avatarUrl = profile?.avatar_url || profile?.avatar || profile?.image_url || metadata?.avatar_url || metadata?.picture || '';
   const sharpAvatarUrl = avatarUrl
     ? avatarUrl
         .replace(/=s\d+-c$/i, '=s256-c')
@@ -49,7 +50,7 @@ export default function ProfileHeader({ profile, user, totalGamesPlayed }) {
         </button>
       </div>
 
-      <p className="mt-4 max-w-2xl text-zinc-400 text-sm leading-relaxed">{profile?.bio || 'No bio yet.'}</p>
+      <p className="mt-4 max-w-2xl text-zinc-400 text-sm leading-relaxed">{profile?.bio || metadata?.bio || 'No bio yet.'}</p>
 
       <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
         {totalGamesPlayed} total {totalGamesPlayed === 1 ? 'game played' : 'games played'}

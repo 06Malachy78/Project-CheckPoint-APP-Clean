@@ -5,8 +5,10 @@ import TopGamesEditor from '@/components/TopGamesEditor';
 import ReviewCard from '@/components/ReviewCard.jsx';
 import ProfileGameStatusEditor from '@/components/ProfileGameStatusEditor';
 import ReplayGamesSection from '@/components/ReplayGamesSection';
+import FavoriteGamesSection from '@/components/FavoriteGamesSection';
 import ProfileHeader from '@/components/ProfileHeader';
 import { groupGameStatuses } from '@/lib/game-statuses';
+import { listFavoriteGames } from '@/lib/favorites';
 
 export default async function ProfilePage() {
   const supabase = await createClient(); 
@@ -54,6 +56,8 @@ export default async function ProfilePage() {
       cover: row.game_cover,
       replayCount: row.replay_count || 0,
     }));
+
+  const favoriteGames = await listFavoriteGames(user.id);
 
   const totalGamesPlayed = new Set(
     safeStatusRows
@@ -104,6 +108,8 @@ export default async function ProfilePage() {
       </section>
 
       <ReplayGamesSection replayGames={replayGames} />
+
+      <FavoriteGamesSection favoriteGames={favoriteGames} />
 
       {/* User Reviews Section */}
       <section>

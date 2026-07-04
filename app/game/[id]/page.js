@@ -3,6 +3,7 @@ import { createClient } from '../../../lib/server';
 import GamePageClient from './GamePageClient';
 import GameReviewFeed from '../../../components/GameReviewFeed';
 import GameCoverCard from '../../../components/GameCoverCard';
+import { isGameFavorited } from '@/lib/favorites';
 
 
 export default async function GamePage({ params }) {
@@ -16,6 +17,7 @@ export default async function GamePage({ params }) {
 
   let initialStatus = null;
   let initialReplayCount = 0;
+  let initialIsFavorite = false;
 
   if (user) {
     const { data: statusRow, error: statusError } = await supabase
@@ -31,6 +33,8 @@ export default async function GamePage({ params }) {
       initialStatus = statusRow?.status ?? null;
       initialReplayCount = typeof statusRow?.replay_count === 'number' ? statusRow.replay_count : 0;
     }
+
+    initialIsFavorite = await isGameFavorited(user.id, id.toString());
   }
 
   // 2. Fetch reviews for this specific game ID from Supabaseee
@@ -96,7 +100,7 @@ export default async function GamePage({ params }) {
             </header>
 
             <div className="py-2">
-              <GamePageClient game={game} initialStatus={initialStatus} initialReplayCount={initialReplayCount} />
+              <GamePageClient game={game} initialStatus={initialStatus} initialReplayCount={initialReplayCount} initialIsFavorite={initialIsFavorite} />
             </div>
 
             <div className="border-t border-zinc-800 pt-8">
