@@ -27,13 +27,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
     setLoading(true);
 
     if (isSignUp) {
+      const normalizedUsername = username.toLowerCase().trim();
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
           data: {
             display_name: username.trim(),
-            username: username.toLowerCase().trim(),
+            username: normalizedUsername,
           },
         },
       });
@@ -41,6 +42,33 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       if (error) {
         alert(error.message);
       } else {
+        try {
+          const ensureResponse = await fetch('/api/profile/ensure', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username: normalizedUsername }),
+          });
+
+          if (!ensureResponse.ok) {
+            throw new Error('Ensure profile request failed');
+          }
+        } catch {
+          // Fallback attempt through client session if server cookies are not ready yet.
+          const signedInUser = data?.user;
+          if (signedInUser?.id) {
+            await supabase.from('profiles').upsert(
+              {
+                id: signedInUser.id,
+                username: normalizedUsername,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'id' }
+            );
+          }
+        }
+
         alert('Account created successfully! You are now logged in.');
         onClose();
         onSuccess?.();

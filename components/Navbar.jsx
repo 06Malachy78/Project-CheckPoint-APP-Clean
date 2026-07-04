@@ -9,7 +9,9 @@ import AuthModal from './AuthModal';
 
 export default function Navbar({ initialUser = null }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [gameResults, setGameResults] = useState([]);
+  const [userResults, setUserResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(initialUser);
   
@@ -42,25 +44,66 @@ export default function Navbar({ initialUser = null }) {
   }, [initialUser]);
 
   useEffect(() => {
+    const currentQuery = query;
     const delayDebounceFn = setTimeout(async () => {
-      if (query.length >= 2) {
+      if (currentQuery.length >= 2) {
+        setIsSearching(true);
+        setIsOpen(true);
+        setGameResults([]);
+        setUserResults([]);
+
         try {
-          const res = await fetch(`/api/search?q=${query}`);
-          const data = await res.json();
-          setResults(Array.isArray(data) ? data : []);
-          setIsOpen(true);
+          const [gamesRes, usersRes] = await Promise.all([
+            fetch(`/api/search?q=${encodeURIComponent(currentQuery)}`),
+            fetch(`/api/search/users?q=${encodeURIComponent(currentQuery)}`),
+          ]);
+
+          const [gamesData, usersData] = await Promise.all([
+            gamesRes.json(),
+            usersRes.json(),
+          ]);
+
+          const safeGames = Array.isArray(gamesData) ? gamesData : [];
+          const safeUsers = Array.isArray(usersData) ? usersData : [];
+
+          setGameResults(safeGames);
+          setUserResults(safeUsers);
+          setIsOpen(safeGames.length > 0 || safeUsers.length > 0);
         } catch (error) {
           console.error("Search error:", error);
-          setResults([]);
+          setGameResults([]);
+          setUserResults([]);
+          setIsOpen(false);
+        } finally {
+          setIsSearching(false);
         }
       } else {
-        setResults([]);
+        setIsSearching(false);
+        setGameResults([]);
+        setUserResults([]);
         setIsOpen(false);
       }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [query]);
+
+  const trackUserResultClick = (username) => {
+    if (!username) return;
+
+    void fetch('/api/analytics/user-search-click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username,
+        source: 'navbar',
+        query,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  };
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -126,7 +169,7 @@ export default function Navbar({ initialUser = null }) {
             <form onSubmit={handleSearchSubmit}>
               <input
                 type="text"
-                placeholder="Search games..."
+                placeholder="Search games or users..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => query.length >= 2 && setIsOpen(true)}
@@ -134,31 +177,105 @@ export default function Navbar({ initialUser = null }) {
               />
             </form>
 
-            {isOpen && results.length > 0 && (
+            {isOpen && (isSearching || userResults.length > 0 || gameResults.length > 0) && (
               <div className="absolute top-full left-0 mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,1)] z-[100]">
-                {results.map((game) => (
-                  <Link
-                    key={game.id}
-                    href={`/game/${game.id}`}
-                    onClick={() => {
-                      setIsOpen(false);
-                      setQuery('');
-                    }}
-                    className="flex items-center gap-4 p-3 hover:bg-zinc-800 transition-colors border-b border-zinc-800/50 last:border-0"
-                  >
-                    <img
-                      src={game.cover?.url?.replace('t_thumb', 't_cover_small') || 'https://via.placeholder.com/40x54'}
-                      alt={game.name}
-                      className="w-10 h-14 rounded object-cover bg-zinc-800 flex-shrink-0"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm text-zinc-100 line-clamp-1">{game.name}</span>
-                      <span className="text-xs text-zinc-500">
-                        {formatReleaseDate(game.first_release_date)}
-                      </span>
+                {isSearching && (
+                  <div>
+                    <div className="border-b border-zinc-800/70">
+                      <p className="px-3 pt-3 pb-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Users</p>
+                      {[1, 2, 3].map((item) => (
+                        <div key={item} className="flex items-center gap-3 p-3 animate-pulse">
+                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="h-3 bg-zinc-800 rounded w-2/5 mb-2" />
+                            <div className="h-2.5 bg-zinc-800 rounded w-3/5" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </Link>
-                ))}
+
+                    <div>
+                      <p className="px-3 pt-3 pb-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Games</p>
+                      {[1, 2].map((item) => (
+                        <div key={item} className="flex items-center gap-4 p-3 animate-pulse border-b border-zinc-800/50 last:border-0">
+                          <div className="w-10 h-14 rounded bg-zinc-800 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="h-3 bg-zinc-800 rounded w-2/3 mb-2" />
+                            <div className="h-2.5 bg-zinc-800 rounded w-1/3" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {userResults.length > 0 && (
+                  <div className="border-b border-zinc-800/70">
+                    <p className="px-3 pt-3 pb-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Users</p>
+                    {userResults.map((profile) => {
+                      const avatarUrl = profile.avatar_url || profile.avatar || profile.image_url || '';
+                      const initials = (profile.username || 'U').slice(0, 2).toUpperCase();
+
+                      return (
+                        <Link
+                          key={profile.id}
+                          href={`/profile/${profile.username}`}
+                          onClick={() => {
+                            trackUserResultClick(profile.username);
+                            setIsOpen(false);
+                            setQuery('');
+                          }}
+                          className="flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors"
+                        >
+                          {avatarUrl ? (
+                            <img
+                              src={avatarUrl}
+                              alt={`${profile.username} avatar`}
+                              className="w-10 h-10 rounded-full object-cover bg-zinc-800 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-300 font-black text-xs flex items-center justify-center flex-shrink-0">
+                              {initials}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <span className="block font-bold text-sm text-zinc-100 truncate">{profile.username}</span>
+                            <span className="block text-xs text-zinc-500 truncate">{profile.bio || 'View profile'}</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {gameResults.length > 0 && (
+                  <div>
+                    <p className="px-3 pt-3 pb-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Games</p>
+                    {gameResults.map((game) => (
+                      <Link
+                        key={game.id}
+                        href={`/game/${game.id}`}
+                        onClick={() => {
+                          setIsOpen(false);
+                          setQuery('');
+                        }}
+                        className="flex items-center gap-4 p-3 hover:bg-zinc-800 transition-colors border-b border-zinc-800/50 last:border-0"
+                      >
+                        <img
+                          src={game.cover?.url?.replace('t_thumb', 't_cover_small') || 'https://via.placeholder.com/40x54'}
+                          alt={game.name}
+                          className="w-10 h-14 rounded object-cover bg-zinc-800 flex-shrink-0"
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-zinc-100 line-clamp-1">{game.name}</span>
+                          <span className="text-xs text-zinc-500">
+                            {formatReleaseDate(game.first_release_date)}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
