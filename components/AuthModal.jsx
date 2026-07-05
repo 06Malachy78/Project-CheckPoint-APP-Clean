@@ -9,6 +9,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
   const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [loading, setLoading] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -17,10 +19,57 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       setEmail('');
       setPassword('');
       setUsername('');
+      setPendingVerificationEmail('');
+      setResendLoading(false);
     }
   }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
+
+  const ensureProfile = async (normalizedUsername = '') => {
+    const ensureResponse = await fetch('/api/profile/ensure', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username: normalizedUsername }),
+    });
+
+    if (!ensureResponse.ok) {
+      throw new Error('Ensure profile request failed');
+    }
+  };
+
+  const getEmailRedirectUrl = () => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+    return `${window.location.origin}/`;
+  };
+
+  const handleResendVerification = async () => {
+    const safeEmail = pendingVerificationEmail || email.trim();
+    if (!safeEmail) {
+      return;
+    }
+
+    setResendLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: safeEmail,
+      options: {
+        emailRedirectTo: getEmailRedirectUrl(),
+      },
+    });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert('Verification email sent.');
+    }
+
+    setResendLoading(false);
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -32,6 +81,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
         email: email.trim(),
         password,
         options: {
+          emailRedirectTo: getEmailRedirectUrl(),
           data: {
             display_name: username.trim(),
             username: normalizedUsername,
@@ -42,18 +92,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       if (error) {
         alert(error.message);
       } else {
-        try {
-          const ensureResponse = await fetch('/api/profile/ensure', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username: normalizedUsername }),
-          });
+        if (!data?.session) {
+          setPendingVerificationEmail(email.trim());
+          setLoading(false);
+          return;
+        }
 
-          if (!ensureResponse.ok) {
-            throw new Error('Ensure profile request failed');
-          }
+        try {
+          await ensureProfile(normalizedUsername);
         } catch {
           // Fallback attempt through client session if server cookies are not ready yet.
           const signedInUser = data?.user;
@@ -84,6 +130,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       if (error) {
         alert(error.message);
       } else {
+        try {
+          await ensureProfile();
+        } catch {
+          // If profile ensure fails we still keep user signed in.
+        }
         onClose();
         onSuccess?.();
         router.refresh();
@@ -115,6 +166,40 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
           <div className="h-1.5 w-10 bg-[#00e054] mx-auto mt-3 rounded-full shadow-[0_0_15px_rgba(0,224,84,0.4)]" />
         </div>
 
+        {pendingVerificationEmail ? (
+          <div className="w-full flex flex-col gap-5">
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              We sent a verification link to <span className="text-[#00e054] font-bold">{pendingVerificationEmail}</span>.
+              Confirm your email to finish signing in.
+            </p>
+
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resendLoading}
+              className="w-full font-black py-4 rounded-xl transition-all active:scale-[0.98] uppercase text-xs tracking-widest mt-1 disabled:opacity-60"
+              style={{
+                backgroundColor: '#00e054',
+                color: '#000',
+                boxShadow: '0 10px 25px rgba(0, 224, 84, 0.3)'
+              }}
+            >
+              {resendLoading ? 'Sending...' : 'Resend Verification Email'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPendingVerificationEmail('');
+                setIsSignUp(false);
+              }}
+              className="text-[10px] text-zinc-500 hover:text-[#00FF88] transition-colors duration-200 font-black uppercase tracking-widest text-center w-full cursor-pointer"
+            >
+              Back to login
+            </button>
+          </div>
+        ) : (
+        <>
         <form onSubmit={handleAuth} className="w-full flex flex-col gap-5">
           
           {/* USERNAME: Only renders on Sign Up */}
@@ -179,6 +264,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
         >
           {isSignUp ? 'Already a member? Log in' : 'No account? Sign up'}
         </button>
+        </>
+        )}
       </div>
     </div>
   );
