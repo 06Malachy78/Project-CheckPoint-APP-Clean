@@ -1,14 +1,23 @@
-﻿import Link from 'next/link';
-import { createClient } from '../../lib/server';
-import GameCard from '@/components/GameCard';
+﻿import { createClient } from '../../lib/server';
 import TopGamesEditor from '@/components/TopGamesEditor';
 import ReviewCard from '@/components/ReviewCard.jsx';
 import ProfileGameStatusEditor from '@/components/ProfileGameStatusEditor';
 import ReplayGamesSection from '@/components/ReplayGamesSection';
 import FavoriteGamesSection from '@/components/FavoriteGamesSection';
 import ProfileHeader from '@/components/ProfileHeader';
+import FollowConnectionsSection from '@/components/FollowConnectionsSection';
 import { groupGameStatuses } from '@/lib/game-statuses';
 import { listFavoriteGames } from '@/lib/favorites';
+import {
+  listFollowers,
+  listFollowing,
+  getFollowStats,
+  listMutualFollowerIds,
+  listMutualFollowingIds,
+} from '@/lib/follows';
+
+const FOLLOW_PREVIEW_LIMIT = 8;
+const FOLLOW_FULL_LIMIT_CAP = 1000;
 
 export default async function ProfilePage() {
   const supabase = await createClient(); 
@@ -46,6 +55,19 @@ export default async function ProfilePage() {
   }
 
   const safeStatusRows = gameStatusRows || [];
+  const followStats = await getFollowStats(user.id);
+  const followersFullLimit = Math.max(FOLLOW_PREVIEW_LIMIT, Math.min(followStats.followersCount, FOLLOW_FULL_LIMIT_CAP));
+  const followingFullLimit = Math.max(FOLLOW_PREVIEW_LIMIT, Math.min(followStats.followingCount, FOLLOW_FULL_LIMIT_CAP));
+  const [allFollowers, allFollowing] = await Promise.all([
+    listFollowers(user.id, followersFullLimit),
+    listFollowing(user.id, followingFullLimit),
+  ]);
+  const followers = allFollowers.slice(0, FOLLOW_PREVIEW_LIMIT);
+  const following = allFollowing.slice(0, FOLLOW_PREVIEW_LIMIT);
+  const [mutualFollowerIds, mutualFollowingIds] = await Promise.all([
+    listMutualFollowerIds(user.id, allFollowers.map((profile) => profile.id)),
+    listMutualFollowingIds(user.id, allFollowing.map((profile) => profile.id)),
+  ]);
   const groupedStatuses = groupGameStatuses(safeStatusRows);
   const replayGames = safeStatusRows
     .filter((row) => (row.replay_count || 0) > 0)
@@ -90,7 +112,30 @@ export default async function ProfilePage() {
   return (
     <>
       <main className="max-w-4xl mx-auto pt-32 px-6 pb-20">
-        <ProfileHeader profile={profile} user={user} totalGamesPlayed={totalGamesPlayed} />
+        <ProfileHeader
+          profile={profile}
+          user={user}
+          totalGamesPlayed={totalGamesPlayed}
+          followersCount={followStats.followersCount}
+          followingCount={followStats.followingCount}
+        />
+
+      <section className="mb-16 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FollowConnectionsSection
+          title="Followers"
+          users={followers}
+          allUsers={allFollowers}
+          emptyText="No followers yet."
+          mutualUserIds={mutualFollowerIds}
+        />
+        <FollowConnectionsSection
+          title="Following"
+          users={following}
+          allUsers={allFollowing}
+          emptyText="You are not following anyone yet."
+          mutualUserIds={mutualFollowingIds}
+        />
+      </section>
 
       {/* Top 3 Games Section */}
       <section className="mb-16">

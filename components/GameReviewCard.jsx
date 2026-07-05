@@ -3,14 +3,24 @@
 import Link from 'next/link';
 
 export default function GameReviewCard({ review }) {
+  const avatarUrl = review.avatar_url || review.avatar || review.image_url || '';
+
   return (
     <Link href={`/review/${review.id}`} className="block hover:opacity-80 transition">
       <div className="bg-zinc-900/40 border border-zinc-800/50 p-5 rounded-2xl backdrop-blur-sm min-h-[190px] overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#00FF88]/20 flex items-center justify-center text-[#00FF88] text-xs font-bold border border-[#00FF88]/30">
-              {review.username?.charAt(0) || 'U'}
-            </div>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={`${review.username || 'User'} avatar`}
+                className="w-8 h-8 rounded-full object-cover bg-zinc-800 border border-zinc-700"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#00FF88]/20 flex items-center justify-center text-[#00FF88] text-xs font-bold border border-[#00FF88]/30">
+                {review.username?.charAt(0) || 'U'}
+              </div>
+            )}
             <span className="text-zinc-100 font-bold truncate">{review.username}</span>
             <span className="inline-flex items-center gap-1 rounded-full bg-zinc-950 border border-zinc-800 px-2 py-1 text-[10px] font-semibold text-zinc-300">
               <svg

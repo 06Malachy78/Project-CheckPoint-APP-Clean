@@ -17,15 +17,42 @@ export default async function HomePage() {
     ? []
     : (await supabase
         .from('reviews')
-        .select('id, created_at, username, rating, content, game_id, game_title, cover_url')
+        .select('id, user_id, created_at, username, rating, content, game_id, game_title, cover_url')
         .order('created_at', { ascending: false })
         .limit(10)
       )?.data ?? [];
 
+  let followingUserIds = [];
+  if (!isGuest && user?.id) {
+    const { data: followingRows, error: followingError } = await supabase
+      .from('user_follows')
+      .select('following_id')
+      .eq('follower_id', user.id);
+
+    if (followingError) {
+      console.error('Unable to load following ids for feed filter:', followingError.message);
+    } else {
+      followingUserIds = (followingRows || []).map((row) => row.following_id).filter(Boolean);
+    }
+  }
+
+  const rawFriendsFeedItems =
+    !isGuest && followingUserIds.length > 0
+      ? (await supabase
+          .from('reviews')
+          .select('id, user_id, created_at, username, rating, content, game_id, game_title, cover_url')
+          .in('user_id', followingUserIds)
+          .order('created_at', { ascending: false })
+          .limit(100)
+        )?.data ?? []
+      : [];
+
   let feedLikeCounts = {};
 
-  if (!isGuest && rawFeedItems.length > 0) {
-    const reviewIds = rawFeedItems.map((review) => review.id);
+  if (!isGuest && (rawFeedItems.length > 0 || rawFriendsFeedItems.length > 0)) {
+    const reviewIds = Array.from(
+      new Set([...rawFeedItems, ...rawFriendsFeedItems].map((review) => review.id).filter(Boolean))
+    );
 
     const { data: likeRows, error: likesError } = await supabase
       .from('review_likes')
@@ -42,9 +69,8 @@ export default async function HomePage() {
     }
   }
 
-  const feedItems = isGuest
-    ? []
-    : rawFeedItems.map((review) => {
+  const mapFeedItems = (items) =>
+    items.map((review) => {
         const coverUrl = review.cover_url?.startsWith('//')
           ? `https:${review.cover_url}`
           : review.cover_url;
@@ -62,6 +88,9 @@ export default async function HomePage() {
           },
         };
       });
+
+  const feedItems = isGuest ? [] : mapFeedItems(rawFeedItems);
+  const friendsFeedItems = isGuest ? [] : mapFeedItems(rawFriendsFeedItems);
 
   const { data: reviewRows } = await supabase
     .from('reviews')
@@ -120,9 +149,11 @@ export default async function HomePage() {
       <div className="max-w-6xl mx-auto pt-36 sm:pt-32 px-4 sm:px-6 pb-16 sm:pb-20">
         <HomeContent
           initialFeedItems={feedItems}
+          initialFriendsFeedItems={friendsFeedItems}
           totalCheckpoints={totalCheckpoints || 0}
           initialIsGuest={isGuest}
           trendingGames={topReviewedGames}
+          followingUserIds={followingUserIds}
         />
       </div>
     </main>

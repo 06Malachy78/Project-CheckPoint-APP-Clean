@@ -69,15 +69,16 @@ export default function TopGamesEditor({ profile, userId }) {
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {slots.map((game, i) => (
-          <div key={i} className="group relative aspect-[3/4] rounded-2xl border-2 border-dashed border-zinc-800 flex flex-col items-center justify-center bg-zinc-900/20 overflow-hidden transition-all hover:border-[#00FF88]/50">
+          <div key={i} className="group relative rounded-3xl border border-zinc-800 overflow-hidden bg-zinc-950 shadow-sm">
             {game ? (
               <>
-                <GameCard game={game} fit="contain" />
+                <GameCard game={game} coverMode="contain" />
                 <button
                   type="button"
                   onClick={(event) => {
+                    event.preventDefault();
                     event.stopPropagation();
                     removeGame(i + 1);
                   }}
@@ -89,19 +90,25 @@ export default function TopGamesEditor({ profile, userId }) {
                 </button>
                 <button 
                   onClick={() => setEditingSlot(i + 1)}
-                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-black tracking-widest text-[#00FF88] uppercase"
+                  className="absolute inset-0 z-10 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-black tracking-widest text-[#00FF88] uppercase"
                 >
                   Change Game
                 </button>
               </>
             ) : (
-              <button 
-                onClick={() => setEditingSlot(i + 1)}
-                className="flex flex-col items-center gap-2 text-zinc-600 hover:text-[#00FF88] transition-colors"
-              >
-                <span className="text-3xl">+</span>
-                <span className="text-[10px] font-black uppercase tracking-widest">Slot {i + 1}</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setEditingSlot(i + 1)}
+                  className="flex aspect-[3/4] w-full items-center justify-center bg-zinc-900 text-3xl text-zinc-600 transition hover:text-[#00FF88]"
+                  aria-label={`Add top game in slot ${i + 1}`}
+                >
+                  +
+                </button>
+                <div className="px-3 py-3">
+                  <p className="text-sm font-bold text-zinc-500 truncate">Slot {i + 1}</p>
+                </div>
+              </>
             )}
           </div>
         ))}

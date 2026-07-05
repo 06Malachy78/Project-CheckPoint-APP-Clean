@@ -5,8 +5,21 @@ import ReviewCard from '@/components/ReviewCard';
 import ProfileGameStatusSections from '@/components/ProfileGameStatusSections';
 import ReplayGamesSection from '@/components/ReplayGamesSection';
 import FavoriteGamesSection from '@/components/FavoriteGamesSection';
+import FollowButton from '@/components/FollowButton';
+import FollowConnectionsSection from '@/components/FollowConnectionsSection';
 import { groupGameStatuses } from '@/lib/game-statuses';
 import { listFavoriteGames } from '@/lib/favorites';
+import {
+  getFollowStats,
+  isFollowingUser,
+  listFollowers,
+  listFollowing,
+  listMutualFollowerIds,
+  listMutualFollowingIds,
+} from '@/lib/follows';
+
+const FOLLOW_PREVIEW_LIMIT = 8;
+const FOLLOW_FULL_LIMIT_CAP = 1000;
 
 export default async function UserProfilePage({ params }) {
   const supabase = await createClient();
@@ -70,6 +83,25 @@ export default async function UserProfilePage({ params }) {
   if (!profile)
     return <p className="pt-32 text-center text-zinc-500 uppercase tracking-widest text-xs">User not found.</p>;
 
+  const isOwnProfile = viewerUser?.id === profile.id;
+
+  const [followStats, initialIsFollowing] = await Promise.all([
+    getFollowStats(profile.id),
+    !isOwnProfile && viewerUser?.id ? isFollowingUser(viewerUser.id, profile.id) : Promise.resolve(false),
+  ]);
+  const followersFullLimit = Math.max(FOLLOW_PREVIEW_LIMIT, Math.min(followStats.followersCount, FOLLOW_FULL_LIMIT_CAP));
+  const followingFullLimit = Math.max(FOLLOW_PREVIEW_LIMIT, Math.min(followStats.followingCount, FOLLOW_FULL_LIMIT_CAP));
+  const [allFollowers, allFollowing] = await Promise.all([
+    listFollowers(profile.id, followersFullLimit),
+    listFollowing(profile.id, followingFullLimit),
+  ]);
+  const followers = allFollowers.slice(0, FOLLOW_PREVIEW_LIMIT);
+  const following = allFollowing.slice(0, FOLLOW_PREVIEW_LIMIT);
+  const [mutualFollowerIds, mutualFollowingIds] = await Promise.all([
+    listMutualFollowerIds(profile.id, allFollowers.map((entry) => entry.id)),
+    listMutualFollowingIds(profile.id, allFollowing.map((entry) => entry.id)),
+  ]);
+
   const safeStatusRows = gameStatusRows || [];
   const topGames = [profile.top_game_1, profile.top_game_2, profile.top_game_3].filter(Boolean);
   const groupedStatuses = groupGameStatuses(safeStatusRows);
@@ -102,31 +134,70 @@ export default async function UserProfilePage({ params }) {
     <>
       <main className="max-w-5xl mx-auto pt-28 px-6 pb-20">
         <div className="mb-14">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="h-[72px] w-[72px] overflow-hidden rounded-full border border-zinc-600 bg-zinc-900 ring-1 ring-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
-              {sharpAvatarUrl ? (
-                <img src={sharpAvatarUrl} alt={`${profile.username} avatar`} className="h-full w-full object-cover object-center" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg font-black text-zinc-300">
-                  {initials}
-                </div>
-              )}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="h-[72px] w-[72px] overflow-hidden rounded-full border border-zinc-600 bg-zinc-900 ring-1 ring-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+                {sharpAvatarUrl ? (
+                  <img src={sharpAvatarUrl} alt={`${profile.username} avatar`} className="h-full w-full object-cover object-center" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-lg font-black text-zinc-300">
+                    {initials}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tighter text-white">{profile.username}</h1>
+                <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mt-2">
+                  {profile.bio || 'No bio yet.'}
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tighter text-white">{profile.username}</h1>
-              <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mt-2">
-                {profile.bio || 'No bio yet.'}
-              </p>
-            </div>
+            {!isOwnProfile && viewerUser?.id && (
+              <FollowButton
+                targetUserId={profile.id}
+                initiallyFollowing={initialIsFollowing}
+                initiallyFollowersCount={followStats.followersCount}
+              />
+            )}
           </div>
 
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
+              <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
+                {followStats.followersCount} followers
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
+              <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
+                {followStats.followingCount} following
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2">
             <span className="text-xs uppercase tracking-[0.2em] font-black text-zinc-300">
               {totalGamesPlayed} total {totalGamesPlayed === 1 ? 'game played' : 'games played'}
             </span>
+            </div>
           </div>
         </div>
+
+        <section className="mb-16 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FollowConnectionsSection
+            title="Followers"
+            users={followers}
+            allUsers={allFollowers}
+            emptyText="No followers yet."
+            mutualUserIds={mutualFollowerIds}
+          />
+          <FollowConnectionsSection
+            title="Following"
+            users={following}
+            allUsers={allFollowing}
+            emptyText="Not following anyone yet."
+            mutualUserIds={mutualFollowingIds}
+          />
+        </section>
 
         <section className="mb-16">
           <div className="flex items-center justify-between gap-4 mb-6">

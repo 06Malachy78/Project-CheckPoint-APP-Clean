@@ -44,6 +44,36 @@ export default async function GamePage({ params }) {
     .eq('game_id', id.toString())
     .order('created_at', { ascending: false });
 
+  let avatarByUsername = {};
+  if ((rawReviews ?? []).length > 0) {
+    const usernames = Array.from(
+      new Set(
+        (rawReviews || [])
+          .map((review) => review.username)
+          .filter(Boolean)
+      )
+    );
+
+    if (usernames.length > 0) {
+      const { data: profileRows, error: profileError } = await supabase
+        .from('profiles')
+        .select('username, avatar_url, avatar, image_url')
+        .in('username', usernames);
+
+      if (profileError) {
+        console.error('Unable to load reviewer avatars:', profileError.message);
+      } else {
+        avatarByUsername = (profileRows || []).reduce((acc, row) => {
+          const key = (row.username || '').toLowerCase();
+          if (key) {
+            acc[key] = row.avatar_url || row.avatar || row.image_url || '';
+          }
+          return acc;
+        }, {});
+      }
+    }
+  }
+
   let reviewLikeCounts = {};
 
   if ((rawReviews ?? []).length > 0) {
@@ -67,6 +97,7 @@ export default async function GamePage({ params }) {
   const reviews = (rawReviews ?? []).map((review) => ({
     ...review,
     like_count: reviewLikeCounts[review.id] ?? 0,
+    avatar_url: avatarByUsername[(review.username || '').toLowerCase()] || '',
   }));
 
   if (!game) return <div className="text-white p-20">Game not found</div>;

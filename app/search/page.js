@@ -1,9 +1,16 @@
 import { searchGames } from '@/lib/igdb';
 import { searchUsers } from '@/lib/user-search';
 import GameCard from '@/components/GameCard';
+import FollowButton from '@/components/FollowButton';
+import { createClient } from '@/lib/server';
 import Link from 'next/link';
 
 export default async function SearchPage({ searchParams }) {
+  const supabase = await createClient();
+  const {
+    data: { user: viewerUser },
+  } = await supabase.auth.getUser();
+
   // In Next.js 15+, searchParams must be awaited
   const { q, type } = await searchParams;
   const query = q || "";
@@ -15,6 +22,24 @@ export default async function SearchPage({ searchParams }) {
   if (query) {
     gameResults = await searchGames(query);
     userResults = await searchUsers(query, 18);
+  }
+
+  const followedUserIds = new Set();
+  if (viewerUser?.id && userResults.length > 0) {
+    const userIds = userResults.map((profile) => profile.id).filter(Boolean);
+    if (userIds.length > 0) {
+      const { data: followingRows } = await supabase
+        .from('user_follows')
+        .select('following_id')
+        .eq('follower_id', viewerUser.id)
+        .in('following_id', userIds);
+
+      for (const row of followingRows || []) {
+        if (row.following_id) {
+          followedUserIds.add(row.following_id);
+        }
+      }
+    }
   }
 
   const showUsers = activeType === 'all' || activeType === 'users';
@@ -88,40 +113,53 @@ export default async function SearchPage({ searchParams }) {
                       const initials = (profile.username || 'U').slice(0, 2).toUpperCase();
 
                       return (
-                        <Link
+                        <div
                           key={profile.id}
-                          href={`/api/analytics/user-search-click?username=${encodeURIComponent(profile.username)}&source=search-page&q=${encodeURIComponent(query)}&redirect=${encodeURIComponent(`/profile/${profile.username}`)}`}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'space-between',
                             gap: '12px',
                             padding: '14px',
                             borderRadius: '16px',
                             border: '1px solid #27272a',
                             backgroundColor: '#111827',
-                            textDecoration: 'none',
                             color: 'white'
                           }}
                         >
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt={`${profile.username} avatar`}
-                              style={{ width: '46px', height: '46px', borderRadius: '999px', objectFit: 'cover', backgroundColor: '#27272a', flexShrink: 0 }}
-                            />
-                          ) : (
-                            <div style={{ width: '46px', height: '46px', borderRadius: '999px', backgroundColor: '#27272a', color: '#d4d4d8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', flexShrink: 0 }}>
-                              {initials}
-                            </div>
-                          )}
+                          <Link
+                            href={`/api/analytics/user-search-click?username=${encodeURIComponent(profile.username)}&source=search-page&q=${encodeURIComponent(query)}&redirect=${encodeURIComponent(`/profile/${profile.username}`)}`}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'white', minWidth: 0, flex: 1 }}
+                          >
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt={`${profile.username} avatar`}
+                                style={{ width: '46px', height: '46px', borderRadius: '999px', objectFit: 'cover', backgroundColor: '#27272a', flexShrink: 0 }}
+                              />
+                            ) : (
+                              <div style={{ width: '46px', height: '46px', borderRadius: '999px', backgroundColor: '#27272a', color: '#d4d4d8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', flexShrink: 0 }}>
+                                {initials}
+                              </div>
+                            )}
 
-                          <div style={{ minWidth: 0 }}>
-                            <p style={{ margin: 0, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.username}</p>
-                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#a1a1aa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {profile.bio || 'View profile'}
-                            </p>
-                          </div>
-                        </Link>
+                            <div style={{ minWidth: 0 }}>
+                              <p style={{ margin: 0, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.username}</p>
+                              <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#a1a1aa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {profile.bio || 'View profile'}
+                              </p>
+                            </div>
+                          </Link>
+
+                          {viewerUser?.id && viewerUser.id !== profile.id && (
+                            <FollowButton
+                              targetUserId={profile.id}
+                              initiallyFollowing={followedUserIds.has(profile.id)}
+                              compact
+                              showCount={false}
+                            />
+                          )}
+                        </div>
                       );
                     })}
                   </div>

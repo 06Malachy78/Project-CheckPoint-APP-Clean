@@ -5,7 +5,14 @@ import { supabase } from '@/lib/supabase';
 import GuestLanding from '@/components/GuestLanding';
 import GlobalActivityFeed from '@/components/GlobalActivityFeed';
 
-export default function HomeContent({ initialFeedItems, totalCheckpoints, initialIsGuest, trendingGames = [] }) {
+export default function HomeContent({
+  initialFeedItems,
+  initialFriendsFeedItems = [],
+  totalCheckpoints,
+  initialIsGuest,
+  trendingGames = [],
+  followingUserIds = [],
+}) {
   const [isGuest, setIsGuest] = useState(initialIsGuest);
 
   useEffect(() => {
@@ -56,7 +63,11 @@ export default function HomeContent({ initialFeedItems, totalCheckpoints, initia
         </div>
       </header>
 
-      <GlobalActivityFeed feedItems={initialFeedItems} />
+      <GlobalActivityFeed
+        feedItems={initialFeedItems}
+        friendsFeedItems={initialFriendsFeedItems}
+        followingUserIds={followingUserIds}
+      />
 
       {initialFeedItems.length === 0 && (
         <div className="text-center py-20 border-2 border-dashed border-zinc-900 rounded-3xl">

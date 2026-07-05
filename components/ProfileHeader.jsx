@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import EditProfileModal from '@/components/EditProfileModal';
 
-export default function ProfileHeader({ profile, user, totalGamesPlayed }) {
+export default function ProfileHeader({ profile, user, totalGamesPlayed, followersCount = 0, followingCount = 0 }) {
   const [isEditing, setIsEditing] = useState(false);
   const metadata = user?.user_metadata || {};
 
@@ -55,6 +55,15 @@ export default function ProfileHeader({ profile, user, totalGamesPlayed }) {
       <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
         {totalGamesPlayed} total {totalGamesPlayed === 1 ? 'game played' : 'games played'}
       </p>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <p className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
+          {followersCount} followers
+        </p>
+        <p className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-300">
+          {followingCount} following
+        </p>
+      </div>
 
       <EditProfileModal
         isOpen={isEditing}
