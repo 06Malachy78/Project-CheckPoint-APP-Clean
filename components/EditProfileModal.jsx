@@ -12,9 +12,35 @@ export default function EditProfileModal({ isOpen, onClose, profile, user }) {
   const [email, setEmail] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletePhrase, setDeletePhrase] = useState('');
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const EMAIL_CHANGE_ENABLED = true;
+
+  const toFriendlyAuthMessage = (rawMessage, fallbackMessage) => {
+    const safeMessage = String(rawMessage || '').trim();
+    const lowered = safeMessage.toLowerCase();
+
+    if (lowered.includes('email rate limit exceeded') || lowered.includes('rate limit')) {
+      return 'Email change rate limit reached. Please wait a minute before trying again.';
+    }
+
+    if (lowered.includes('new password should be different')) {
+      return 'Your new password must be different from your current password.';
+    }
+
+    if (lowered.includes('password should be at least')) {
+      return safeMessage;
+    }
+
+    return safeMessage || fallbackMessage;
+  };
 
   const initials = useMemo(() => {
     const seed = (username || profile?.username || user?.email || 'U').trim();
@@ -30,6 +56,10 @@ export default function EditProfileModal({ isOpen, onClose, profile, user }) {
     setEmail(user?.email || '');
     setBio(profile?.bio || metadata?.bio || '');
     setAvatarUrl(profile?.avatar_url || profile?.avatar || profile?.image_url || metadata?.avatar_url || metadata?.picture || '');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setDeletePhrase('');
     setMessage('');
     setErrorMessage('');
   }, [isOpen, profile, user]);
@@ -148,28 +178,23 @@ export default function EditProfileModal({ isOpen, onClose, profile, user }) {
       }
     }
 
-    const authPayload = {
-      data: {
-        username: normalizedUsername,
-        display_name: normalizedUsername,
-        bio: normalizedBio || null,
-        avatar_url: normalizedAvatarUrl || null,
-      },
-    };
+    const normalizedCurrentEmail = (user.email || '').trim().toLowerCase();
+    const emailChanged = EMAIL_CHANGE_ENABLED && normalizedEmail !== normalizedCurrentEmail;
 
-    if (normalizedEmail !== (user.email || '').toLowerCase()) {
-      authPayload.email = normalizedEmail;
-    }
+    if (emailChanged) {
+      const { error: authError } = await supabase.auth.updateUser({
+        email: normalizedEmail,
+      });
 
-    const { error: authError } = await supabase.auth.updateUser(authPayload);
-    if (authError) {
-      setErrorMessage(authError.message || 'Profile saved, but auth details could not be updated.');
-      setIsSaving(false);
-      return;
+      if (authError) {
+        setErrorMessage(toFriendlyAuthMessage(authError.message, 'Profile saved, but email could not be updated.'));
+        setIsSaving(false);
+        return;
+      }
     }
 
     setMessage(
-      normalizedEmail !== (user.email || '').toLowerCase()
+      emailChanged
         ? 'Profile updated. Check your inbox to confirm your new email address.'
         : 'Profile updated successfully.'
     );
@@ -181,13 +206,113 @@ export default function EditProfileModal({ isOpen, onClose, profile, user }) {
     }, 350);
   };
 
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+    if (!user?.email || isChangingPassword || isSaving || isDeleting) return;
+
+    setMessage('');
+    setErrorMessage('');
+
+    const normalizedCurrentPassword = currentPassword.trim();
+    const normalizedNewPassword = newPassword.trim();
+    const normalizedConfirmPassword = confirmNewPassword.trim();
+
+    if (!normalizedCurrentPassword || !normalizedNewPassword || !normalizedConfirmPassword) {
+      setErrorMessage('Please fill in all password fields.');
+      return;
+    }
+
+    if (normalizedNewPassword.length < 8) {
+      setErrorMessage('New password must be at least 8 characters.');
+      return;
+    }
+
+    if (normalizedNewPassword !== normalizedConfirmPassword) {
+      setErrorMessage('New password and confirmation do not match.');
+      return;
+    }
+
+    if (normalizedCurrentPassword === normalizedNewPassword) {
+      setErrorMessage('New password must be different from your current password.');
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: normalizedCurrentPassword,
+    });
+
+    if (verifyError) {
+      setErrorMessage('Current password is incorrect.');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    const { error: updatePasswordError } = await supabase.auth.updateUser({
+      password: normalizedNewPassword,
+    });
+
+    if (updatePasswordError) {
+      setErrorMessage(toFriendlyAuthMessage(updatePasswordError.message, 'Unable to update password.'));
+      setIsChangingPassword(false);
+      return;
+    }
+
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setMessage('Password updated successfully.');
+    setIsChangingPassword(false);
+    router.refresh();
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id || isDeleting || isSaving) return;
+
+    if (deletePhrase.trim().toUpperCase() !== 'DELETE') {
+      setErrorMessage('Type DELETE to confirm account deletion.');
+      return;
+    }
+
+    const confirmed = window.confirm('Delete your account permanently? This cannot be undone.');
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setMessage('');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/profile/delete-account', {
+        method: 'DELETE',
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setErrorMessage(payload?.error || 'Unable to delete account.');
+        setIsDeleting(false);
+        return;
+      }
+
+      await supabase.auth.signOut();
+      router.replace('/');
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(error?.message || 'Unable to delete account.');
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto p-4 sm:p-6">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
 
       <form
         onSubmit={handleSave}
-        className="relative z-10 w-full max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-950 p-5 sm:p-8 shadow-[0_35px_80px_rgba(0,0,0,0.65)]"
+        className="relative z-10 my-4 sm:my-0 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-950 p-5 sm:p-8 shadow-[0_35px_80px_rgba(0,0,0,0.65)] [scrollbar-width:thin] [scrollbar-color:#3f3f46_#09090b]"
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
@@ -305,6 +430,83 @@ export default function EditProfileModal({ isOpen, onClose, profile, user }) {
             className="rounded-xl bg-[#00FF88] px-6 py-2.5 text-xs font-black uppercase tracking-[0.16em] text-black shadow-[0_10px_25px_rgba(0,255,136,0.25)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400">Account Security</p>
+          <p className="mt-2 text-xs text-zinc-300">Change your password using your current password for confirmation.</p>
+
+          <form onSubmit={handleChangePassword} className="mt-4 grid gap-3">
+            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              Current Password
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#00FF88]/60"
+                autoComplete="current-password"
+              />
+            </label>
+
+            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              New Password
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#00FF88]/60"
+                autoComplete="new-password"
+              />
+            </label>
+
+            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              Confirm New Password
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(event) => setConfirmNewPassword(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#00FF88]/60"
+                autoComplete="new-password"
+              />
+            </label>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isChangingPassword || isSaving || isDeleting}
+                className="rounded-xl border border-[#00FF88]/60 px-4 py-2.5 text-xs font-black uppercase tracking-[0.16em] text-[#00FF88] transition hover:bg-[#00FF88]/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isChangingPassword ? 'Updating Password...' : 'Update Password'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-red-500/30 bg-red-950/20 p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-300">Danger Zone</p>
+          <p className="mt-2 text-xs text-zinc-300">
+            This will permanently remove your account, profile, reviews, follows, and saved game data.
+          </p>
+
+          <label className="mt-4 block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+            Type DELETE to confirm
+            <input
+              type="text"
+              value={deletePhrase}
+              onChange={(event) => setDeletePhrase(event.target.value)}
+              placeholder="DELETE"
+              className="mt-2 w-full rounded-xl border border-red-500/40 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-red-400"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={handleDeleteAccount}
+            disabled={isDeleting || isSaving}
+            className="mt-4 rounded-xl bg-red-500 px-4 py-2.5 text-xs font-black uppercase tracking-[0.16em] text-white shadow-[0_10px_25px_rgba(239,68,68,0.25)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isDeleting ? 'Deleting Account...' : 'Delete Account'}
           </button>
         </div>
       </form>

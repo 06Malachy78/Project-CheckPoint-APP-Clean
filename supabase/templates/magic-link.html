@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your CHECKPOINT magic link</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#09090b; color:#ffffff; font-family:'Poppins','Segoe UI',Arial,sans-serif;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#09090b;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            style="max-width:620px; background:linear-gradient(180deg, #111317 0%, #0b0d10 100%); border:1px solid #27272a; border-radius:24px; overflow:hidden;"
+          >
+            <tr>
+              <td style="padding:28px 28px 0 28px; text-align:left;">
+                <p style="margin:0; font-size:12px; letter-spacing:2px; font-weight:800; color:#a1a1aa; text-transform:uppercase;">
+                  Passwordless Sign In
+                </p>
+                <h1 style="margin:10px 0 0 0; font-size:34px; line-height:1.05; letter-spacing:-0.5px; font-weight:900; color:#ffffff;">
+                  CHECKPOINT
+                </h1>
+                <div style="height:6px; width:52px; margin-top:12px; border-radius:999px; background:#00e054;"></div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:26px 28px 0 28px;">
+                <p style="margin:0; font-size:16px; line-height:1.7; color:#d4d4d8;">
+                  Hey,
+                </p>
+                <p style="margin:14px 0 0 0; font-size:16px; line-height:1.7; color:#d4d4d8;">
+                  Use this secure magic link to sign in to CHECKPOINT for
+                  <span style="color:#00ff88; font-weight:700;">{{ .Email }}</span>.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="padding:28px 28px 0 28px;">
+                <a
+                  href="{{ .ConfirmationURL }}"
+                  style="display:inline-block; background-color:#00e054; color:#050505; text-decoration:none; font-size:13px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; padding:16px 28px; border-radius:14px;"
+                >
+                  Sign In Now
+                </a>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:26px 28px 0 28px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#121317; border:1px solid #27272a; border-radius:14px;">
+                  <tr>
+                    <td style="padding:14px 16px;">
+                      <p style="margin:0; font-size:12px; line-height:1.7; color:#a1a1aa;">
+                        If the button does not work, copy and paste this URL into your browser:
+                      </p>
+                      <p style="margin:8px 0 0 0; word-break:break-all; font-size:12px; line-height:1.6; color:#00ff88;">
+                        {{ .ConfirmationURL }}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:22px 28px 0 28px;">
+                <p style="margin:0; font-size:13px; line-height:1.7; color:#a1a1aa;">
+                  If you did not request this link, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:24px 28px 28px 28px;">
+                <p style="margin:0; font-size:11px; line-height:1.6; color:#71717a; text-transform:uppercase; letter-spacing:1px;">
+                  CHECKPOINT
+                </p>
+                <p style="margin:6px 0 0 0; font-size:11px; line-height:1.6; color:#52525b;">
+                  Secure sign in via Supabase Auth
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

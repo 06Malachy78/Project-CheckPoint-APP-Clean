@@ -11,7 +11,19 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
   const [loading, setLoading] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
   const router = useRouter();
+
+  const toFriendlyAuthMessage = (rawMessage, fallbackMessage) => {
+    const safeMessage = String(rawMessage || '').trim();
+    const lowered = safeMessage.toLowerCase();
+
+    if (lowered.includes('email rate limit exceeded') || lowered.includes('rate limit')) {
+      return 'Too many auth emails were sent recently. Please wait a minute and try again.';
+    }
+
+    return safeMessage || fallbackMessage;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -21,6 +33,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       setUsername('');
       setPendingVerificationEmail('');
       setResendLoading(false);
+      setAuthMessage('');
     }
   }, [isOpen, initialMode]);
 
@@ -54,6 +67,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
     }
 
     setResendLoading(true);
+    setAuthMessage('');
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: safeEmail,
@@ -63,9 +77,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
     });
 
     if (error) {
-      alert(error.message);
+      setAuthMessage(toFriendlyAuthMessage(error.message, 'Unable to resend verification email.'));
     } else {
-      alert('Verification email sent.');
+      setAuthMessage('Verification email sent.');
     }
 
     setResendLoading(false);
@@ -74,6 +88,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setAuthMessage('');
 
     if (isSignUp) {
       const normalizedUsername = username.toLowerCase().trim();
@@ -90,7 +105,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       });
 
       if (error) {
-        alert(error.message);
+        setAuthMessage(toFriendlyAuthMessage(error.message, 'Unable to create account.'));
       } else {
         if (!data?.session) {
           setPendingVerificationEmail(email.trim());
@@ -128,7 +143,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       });
 
       if (error) {
-        alert(error.message);
+        setAuthMessage(toFriendlyAuthMessage(error.message, 'Unable to sign in.'));
       } else {
         try {
           await ensureProfile();
@@ -197,6 +212,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
             >
               Back to login
             </button>
+
+            {authMessage && (
+              <p className="text-[10px] text-red-400 font-black uppercase tracking-[0.14em]">{authMessage}</p>
+            )}
           </div>
         ) : (
         <>
@@ -264,6 +283,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
         >
           {isSignUp ? 'Already a member? Log in' : 'No account? Sign up'}
         </button>
+
+        {authMessage && (
+          <p className="mt-4 text-[10px] text-red-400 font-black uppercase tracking-[0.14em] text-center">{authMessage}</p>
+        )}
         </>
         )}
       </div>
