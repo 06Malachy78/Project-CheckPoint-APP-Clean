@@ -10,7 +10,7 @@ import {
 function getCoverUrl(game) {
   const coverUrl =
     game?.cover?.url?.replace('t_thumb', 't_cover_big') ||
-    'https://via.placeholder.com/264x352?text=No+Cover';
+    '/no-cover.svg';
 
   return coverUrl.startsWith('//') ? `https:${coverUrl}` : coverUrl;
 }

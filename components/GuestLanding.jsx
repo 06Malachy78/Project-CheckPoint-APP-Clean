@@ -31,7 +31,7 @@ export default function GuestLanding({ totalCheckpoints, trendingGames = [] }) {
     const rawUrl = cover?.url || '';
     const resized = rawUrl.replace('t_thumb', 't_cover_big');
     const finalUrl = resized.startsWith('//') ? `https:${resized}` : resized;
-    return finalUrl || 'https://via.placeholder.com/640x360?text=No+Cover';
+    return finalUrl || '/no-cover.svg';
   };
 
   const getSummary = (summary) => summary ? summary.slice(0, 100).trim() : 'Trending now on CHECKPOINT.';

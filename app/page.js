@@ -83,7 +83,7 @@ export default async function HomePage() {
           gameData: {
             name: review.game_title || 'Untitled Game',
             cover: {
-              url: coverUrl || 'https://via.placeholder.com/640x360?text=No+Cover',
+              url: coverUrl || '/no-cover.svg',
             },
           },
         };
@@ -139,7 +139,7 @@ export default async function HomePage() {
           id: game.game_id,
           name: game.name,
           summary,
-          cover: { url: coverUrl || 'https://via.placeholder.com/640x360?text=No+Cover' },
+          cover: { url: coverUrl || '/no-cover.svg' },
         };
       })
   );

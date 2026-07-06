@@ -1,7 +1,7 @@
 ﻿import Link from 'next/link';
 
 export default function GameCard({ game, coverMode = 'cover' }) {
-  const coverUrl = game.cover?.url?.replace('t_thumb', 't_cover_big') || 'https://via.placeholder.com/640x360?text=No+Cover';
+  const coverUrl = game.cover?.url?.replace('t_thumb', 't_cover_big') || '/no-cover.svg';
   const finalUrl = coverUrl.startsWith('//') ? `https:${coverUrl}` : coverUrl;
 
   return (

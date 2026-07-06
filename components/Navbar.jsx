@@ -267,9 +267,9 @@ export default function Navbar({ initialUser = null }) {
   return (
     <>
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 sm:gap-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center gap-2 sm:gap-6">
           
-          <Link href="/" className="text-[#00FF88] font-black text-lg sm:text-xl tracking-tighter transition-colors duration-200 hover:text-[#7CFFBF] hover:opacity-90">
+          <Link href="/" className="text-[#00FF88] font-black text-base sm:text-xl tracking-tight transition-colors duration-200 hover:text-[#7CFFBF] hover:opacity-90">
             CHECKPOINT
           </Link>
 
@@ -286,7 +286,7 @@ export default function Navbar({ initialUser = null }) {
             </form>
 
             {isOpen && (isSearching || userResults.length > 0 || gameResults.length > 0) && (
-              <div className="absolute top-full left-0 mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,1)] z-[100]">
+              <div className="absolute top-full left-0 mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,1)] z-[100] max-h-[70vh] overflow-y-auto">
                 {isSearching && (
                   <div>
                     <div className="border-b border-zinc-800/70">
@@ -370,7 +370,7 @@ export default function Navbar({ initialUser = null }) {
                         className="flex items-center gap-4 p-3 hover:bg-zinc-800 transition-colors border-b border-zinc-800/50 last:border-0"
                       >
                         <img
-                          src={game.cover?.url?.replace('t_thumb', 't_cover_small') || 'https://via.placeholder.com/40x54'}
+                          src={game.cover?.url?.replace('t_thumb', 't_cover_small') || '/no-cover.svg'}
                           alt={game.name}
                           className="w-10 h-14 rounded object-cover bg-zinc-800 flex-shrink-0"
                         />
@@ -388,7 +388,7 @@ export default function Navbar({ initialUser = null }) {
             )}
           </div>
 
-          <div className="ml-auto order-2 sm:order-3 flex items-center gap-3 sm:gap-6">
+          <div className="ml-auto order-2 sm:order-3 flex items-center gap-2 sm:gap-5 flex-wrap justify-end">
             {/* 🔥 2. ALTERED AUTHENTICATED LINKS BLOCK */}
             {user ? (
               <>
@@ -467,14 +467,14 @@ export default function Navbar({ initialUser = null }) {
 
                 <Link 
                   href="/profile" 
-                  className={`text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-colors ${pathname === '/profile' ? 'text-[#00FF88]' : 'text-zinc-400 hover:text-[#00FF88]'}`}
+                  className={`text-[10px] sm:text-xs font-black uppercase tracking-[0.14em] sm:tracking-[0.2em] transition-colors ${pathname === '/profile' ? 'text-[#00FF88]' : 'text-zinc-400 hover:text-[#00FF88]'}`}
                 >
                   Profile
                 </Link>
                 
                 <button 
                   onClick={handleLogOut}
-                  className="text-zinc-500 hover:text-red-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-colors cursor-pointer bg-transparent border-none outline-none"
+                  className="text-zinc-500 hover:text-red-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.14em] sm:tracking-[0.2em] transition-colors cursor-pointer bg-transparent border-none outline-none"
                 >
                   Log Out
                 </button>
@@ -484,7 +484,7 @@ export default function Navbar({ initialUser = null }) {
                 {/* CREATE ACCOUNT with Hover Glow */}
                 <button 
                   onClick={() => openAuth('signup')}
-                  className="text-zinc-400 hover:text-[#00FF88] text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-all duration-300"
+                  className="text-zinc-400 hover:text-[#00FF88] text-[10px] sm:text-xs font-black uppercase tracking-[0.14em] sm:tracking-[0.2em] transition-all duration-300"
                 >
                   Create Account
                 </button>
@@ -492,7 +492,7 @@ export default function Navbar({ initialUser = null }) {
                 {/* SIGN IN  ... */} 
                 <button 
                   onClick={() => openAuth('login')}
-                  className="bg-[#00FF88] text-black px-4 sm:px-8 py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-widest transition-all shadow-[0_0_20px_rgba(0,255,136,0.15)]"
+                  className="bg-[#00FF88] text-black px-3.5 sm:px-8 py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.14em] sm:tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(0,255,136,0.15)]"
                 >
                   Sign In
                 </button>

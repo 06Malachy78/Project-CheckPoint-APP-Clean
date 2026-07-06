@@ -184,23 +184,20 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto">
       <div className="absolute inset-0" onClick={onClose} />
 
       <div 
-        className="relative z-10 w-full flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.8)]"
+        className="relative z-10 w-full max-w-[420px] flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.8)] p-6 sm:p-10 md:p-12 rounded-3xl sm:rounded-[32px] max-h-[calc(100vh-2rem)] sm:max-h-[90vh] overflow-y-auto"
         style={{ 
-          maxWidth: '400px', 
           backgroundColor: 'rgba(15, 18, 22, 0.9)', 
-          padding: '48px', 
-          borderRadius: '32px',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           backdropFilter: 'blur(30px)',
           WebkitBackdropFilter: 'blur(30px)',
         }}
       >
-        <div className="text-center mb-10">
-          <h2 className="text-white text-3xl font-black italic tracking-tighter uppercase leading-none">
+        <div className="text-center mb-8 sm:mb-10">
+          <h2 className="text-white text-2xl sm:text-3xl font-black italic tracking-tighter uppercase leading-none">
             {isSignUp ? 'Join' : 'Sign In'}
           </h2>
           <div className="h-1.5 w-10 bg-[#00e054] mx-auto mt-3 rounded-full shadow-[0_0_15px_rgba(0,224,84,0.4)]" />

@@ -74,18 +74,18 @@ export default async function SearchPage({ searchParams }) {
   });
 
   return (
-    <main style={{ backgroundColor: '#09090b', minHeight: '100vh', color: 'white', paddingTop: '80px', paddingLeft: '40px', paddingRight: '40px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '1.5rem', color: '#71717a', marginBottom: '30px' }}>
+    <main className="min-h-screen bg-[#09090b] text-white pt-28 sm:pt-24 px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-xl sm:text-2xl text-zinc-500 mb-6 sm:mb-8 leading-tight">
           {query ? (
-            <>Results for <span style={{ color: '#00FF88' }}>&quot;{query}&quot;</span></>
+            <>Results for <span className="text-[#00FF88]">&quot;{query}&quot;</span></>
           ) : (
             <>Search games and users using the bar above.</>
           )}
         </h1>
 
         {query && (
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <div className="flex gap-2.5 mb-6 flex-wrap">
             <Link href={createSearchHref('all')} style={filterLinkStyle('all')}>
               All
             </Link>
@@ -99,15 +99,15 @@ export default async function SearchPage({ searchParams }) {
         )}
 
         {query ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
+          <div className="flex flex-col gap-8 sm:gap-9">
             {showUsers && (
               <section>
-                <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#71717a', marginBottom: '14px', fontWeight: 800 }}>
+                <h2 className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 mb-3.5 font-extrabold">
                   Users
                 </h2>
 
                 {userResults.length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
                     {userResults.map((profile) => {
                       const avatarUrl = profile.avatar_url || profile.avatar || profile.image_url || '';
                       const initials = (profile.username || 'U').slice(0, 2).toUpperCase();
@@ -164,8 +164,8 @@ export default async function SearchPage({ searchParams }) {
                     })}
                   </div>
                 ) : (
-                  <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: '#111827', border: '1px solid #27272a', marginBottom: '6px' }}>
-                    <p style={{ color: '#94a3b8', marginBottom: 0 }}>No users found.</p>
+                  <div className="p-5 sm:p-6 rounded-2xl bg-[#111827] border border-zinc-800 mb-1.5">
+                    <p className="text-slate-400 mb-0">No users found.</p>
                   </div>
                 )}
               </section>
@@ -173,34 +173,34 @@ export default async function SearchPage({ searchParams }) {
 
             {showGames && (
               <section>
-                <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#71717a', marginBottom: '14px', fontWeight: 800 }}>
+                <h2 className="text-[11px] tracking-[0.2em] uppercase text-zinc-500 mb-3.5 font-extrabold">
                   Games
                 </h2>
 
                 {gameResults.length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '25px' }}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
                     {gameResults.map((game) => <GameCard key={game.id} game={game} />)}
                   </div>
                 ) : (
-                  <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: '#111827', border: '1px solid #27272a' }}>
-                    <p style={{ color: '#94a3b8', marginBottom: 0 }}>No games found.</p>
+                  <div className="p-5 sm:p-6 rounded-2xl bg-[#111827] border border-zinc-800">
+                    <p className="text-slate-400 mb-0">No games found.</p>
                   </div>
                 )}
               </section>
             )}
 
             {((showUsers && userResults.length === 0) && (showGames && gameResults.length === 0) && activeType === 'all') && (
-              <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: '#111827', border: '1px solid #27272a' }}>
-                <p style={{ color: '#cbd5e1', marginBottom: 0 }}>Try searching for a different game title or username.</p>
+              <div className="p-5 sm:p-6 rounded-2xl bg-[#111827] border border-zinc-800">
+                <p className="text-slate-300 mb-0">Try searching for a different game title or username.</p>
               </div>
             )}
           </div>
         ) : (
-          <div style={{ padding: '40px', borderRadius: '24px', backgroundColor: '#111827', border: '1px solid #27272a', maxWidth: '600px' }}>
-            <p style={{ color: '#94a3b8', marginBottom: '12px', fontSize: '1rem' }}>
+          <div className="p-6 sm:p-10 rounded-3xl bg-[#111827] border border-zinc-800 max-w-2xl">
+            <p className="text-slate-400 mb-3 text-base">
               Use the search bar at the top to find games, users, and reviews.
             </p>
-            <p style={{ color: '#cbd5e1', fontSize: '0.95rem' }}>
+            <p className="text-slate-300 text-[0.95rem]">
               Start typing a game name or username and hit enter to see results here.
             </p>
           </div>

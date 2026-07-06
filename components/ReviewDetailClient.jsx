@@ -175,7 +175,7 @@ export default function ReviewDetailClient({ review, game, profile, isOwnReview 
 
   return (
     <div className="space-y-6">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-8">
         <div className="flex flex-col md:flex-row md:items-start gap-6">
           {review.game_id ? (
             <Link
@@ -224,9 +224,9 @@ export default function ReviewDetailClient({ review, game, profile, isOwnReview 
               </Link>
             </div>
 
-            <div className="flex items-center justify-between gap-4 relative">
-              <div className="min-w-0">
-                <h1 className="text-3xl font-black tracking-tight text-zinc-100 break-words leading-tight">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 relative">
+              <div className="min-w-0 sm:pr-14">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100 break-words leading-tight">
                   {review.game_title}
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-zinc-400">
@@ -245,7 +245,7 @@ export default function ReviewDetailClient({ review, game, profile, isOwnReview 
                 type="button"
                 onClick={hasLiked ? handleUnlike : handleLike}
                 disabled={isSaving || isLoadingLikeStatus || !userId}
-                className={`absolute right-0 top-0 inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition self-start sm:self-auto sm:absolute sm:right-0 sm:top-0 ${
                   hasLiked
                     ? 'bg-zinc-950 border-[#00FF88] text-[#00FF88]'
                     : 'bg-zinc-950 border-zinc-700 text-[#00FF88] hover:border-[#00FF88] hover:text-[#00FF88]'
@@ -289,9 +289,9 @@ export default function ReviewDetailClient({ review, game, profile, isOwnReview 
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-8">
         <h2 className="text-xl font-black tracking-tight text-zinc-100 mb-4">Review</h2>
-        <p className="text-zinc-300 leading-8 break-words whitespace-pre-wrap">{review.content}</p>
+        <p className="text-zinc-300 leading-7 sm:leading-8 break-words whitespace-pre-wrap">{review.content}</p>
       </div>
     </div>
   );
