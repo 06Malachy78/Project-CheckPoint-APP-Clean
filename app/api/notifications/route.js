@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/server';
+import { createAdminClient } from '@/lib/admin';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -71,6 +72,8 @@ function toFavoriteNotification(favoriteRow, profileById) {
 
 export async function GET(request) {
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
+  const readClient = adminSupabase || supabase;
   const {
     data: { user },
     error: authError,
@@ -106,23 +109,23 @@ export async function GET(request) {
     { data: statusRows, error: statusError },
     { data: favoriteRows, error: favoriteError },
   ] = await Promise.all([
-    supabase
+    readClient
       .from('profiles')
       .select('id, username, avatar_url')
       .in('id', followingIds),
-    supabase
+    readClient
       .from('reviews')
       .select('id, user_id, username, game_id, game_title, created_at')
       .in('user_id', followingIds)
       .order('created_at', { ascending: false })
       .limit(safeLimit * 2),
-    supabase
+    readClient
       .from('game_statuses')
       .select('user_id, game_id, game_name, status, updated_at')
       .in('user_id', followingIds)
       .order('updated_at', { ascending: false })
       .limit(safeLimit * 2),
-    supabase
+    readClient
       .from('favorite_games')
       .select('user_id, game_id, game_name, updated_at')
       .in('user_id', followingIds)

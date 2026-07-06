@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -135,55 +135,67 @@ export default function Navbar({ initialUser = null }) {
     }).catch(() => {});
   };
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user?.id) {
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setNotificationsError('');
+      setIsNotificationsLoading(false);
+      return;
+    }
+
+    setIsNotificationsLoading(true);
+    setNotificationsError('');
+
+    try {
+      const response = await fetch('/api/notifications?limit=20');
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
         setNotifications([]);
         setUnreadCount(0);
-        setNotificationsError('');
-        setIsNotificationsLoading(false);
+        setNotificationsError(payload?.error || 'Unable to load notifications.');
         return;
       }
 
-      setIsNotificationsLoading(true);
-      setNotificationsError('');
+      const safeNotifications = Array.isArray(payload?.notifications) ? payload.notifications : [];
+      setNotifications(safeNotifications);
 
-      try {
-        const response = await fetch('/api/notifications?limit=20');
-        const payload = await response.json().catch(() => ({}));
+      const key = `${NOTIFICATION_STORAGE_KEY}.${user.id}`;
+      const lastSeenRaw = window.localStorage.getItem(key) || '';
+      const lastSeen = Date.parse(lastSeenRaw);
+      const baseline = Number.isNaN(lastSeen) ? 0 : lastSeen;
 
-        if (!response.ok) {
-          setNotifications([]);
-          setUnreadCount(0);
-          setNotificationsError(payload?.error || 'Unable to load notifications.');
-          return;
-        }
+      const unread = safeNotifications.filter((entry) => {
+        const createdAt = Date.parse(entry?.createdAt || '');
+        return !Number.isNaN(createdAt) && createdAt > baseline;
+      }).length;
 
-        const safeNotifications = Array.isArray(payload?.notifications) ? payload.notifications : [];
-        setNotifications(safeNotifications);
-
-        const key = `${NOTIFICATION_STORAGE_KEY}.${user.id}`;
-        const lastSeenRaw = window.localStorage.getItem(key) || '';
-        const lastSeen = Date.parse(lastSeenRaw);
-        const baseline = Number.isNaN(lastSeen) ? 0 : lastSeen;
-
-        const unread = safeNotifications.filter((entry) => {
-          const createdAt = Date.parse(entry?.createdAt || '');
-          return !Number.isNaN(createdAt) && createdAt > baseline;
-        }).length;
-
-        setUnreadCount(unread);
-      } catch {
-        setNotifications([]);
-        setUnreadCount(0);
-        setNotificationsError('Unable to load notifications.');
-      } finally {
-        setIsNotificationsLoading(false);
-      }
-    };
-
-    fetchNotifications();
+      setUnreadCount(unread);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+      setNotificationsError('Unable to load notifications.');
+    } finally {
+      setIsNotificationsLoading(false);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+
+    return () => window.clearInterval(intervalId);
+  }, [fetchNotifications, user?.id]);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -200,12 +212,14 @@ export default function Navbar({ initialUser = null }) {
   }, []);
 
   const handleNotificationsToggle = () => {
-    setIsNotificationsOpen((open) => !open);
+    const willOpen = !isNotificationsOpen;
+    setIsNotificationsOpen(willOpen);
 
-    if (!isNotificationsOpen && user?.id) {
+    if (willOpen && user?.id) {
       const key = `${NOTIFICATION_STORAGE_KEY}.${user.id}`;
       window.localStorage.setItem(key, new Date().toISOString());
       setUnreadCount(0);
+      fetchNotifications();
     }
   };
 
