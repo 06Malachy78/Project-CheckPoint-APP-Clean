@@ -18,6 +18,7 @@ export default async function GamePage({ params }) {
   let initialStatus = null;
   let initialReplayCount = 0;
   let initialIsFavorite = false;
+  let followingUserIds = [];
 
   if (user) {
     const { data: statusRow, error: statusError } = await supabase
@@ -35,6 +36,17 @@ export default async function GamePage({ params }) {
     }
 
     initialIsFavorite = await isGameFavorited(user.id, id.toString());
+
+    const { data: followingRows, error: followingError } = await supabase
+      .from('user_follows')
+      .select('following_id')
+      .eq('follower_id', user.id);
+
+    if (followingError) {
+      console.error('Unable to load following ids for game feed filter:', followingError.message);
+    } else {
+      followingUserIds = (followingRows || []).map((row) => row.following_id).filter(Boolean);
+    }
   }
 
   // 2. Fetch reviews for this specific game ID from Supabaseee
@@ -191,7 +203,7 @@ export default async function GamePage({ params }) {
                 Recent Checkpoints
               </h3>
               
-              <GameReviewFeed reviews={reviews} />
+              <GameReviewFeed reviews={reviews} followingUserIds={followingUserIds} initialIsGuest={!user} />
             </div>
             {/* End Reviews Section */}
             

@@ -6,13 +6,19 @@ import GameReviewCard from './GameReviewCard';
 const sortOptions = [
   { key: 'recent', label: 'Newest' },
   { key: 'liked', label: 'Most liked' },
+  { key: 'friends', label: 'Friends' },
 ];
 
-export default function GameReviewFeed({ reviews }) {
+export default function GameReviewFeed({ reviews, followingUserIds = [], initialIsGuest = true }) {
   const [sortBy, setSortBy] = useState('recent');
+  const isFriendsMode = sortBy === 'friends';
 
   const sortedReviews = useMemo(() => {
-    return [...reviews].sort((a, b) => {
+    const baseReviews = isFriendsMode
+      ? reviews.filter((review) => review?.user_id && followingUserIds.includes(review.user_id))
+      : reviews;
+
+    return [...baseReviews].sort((a, b) => {
       if (sortBy === 'liked') {
         const aLikes = a.like_count ?? 0;
         const bLikes = b.like_count ?? 0;
@@ -24,7 +30,23 @@ export default function GameReviewFeed({ reviews }) {
 
       return new Date(b.created_at) - new Date(a.created_at);
     });
-  }, [reviews, sortBy]);
+  }, [followingUserIds, isFriendsMode, reviews, sortBy]);
+
+  const friendsEmptyMessage = useMemo(() => {
+    if (!isFriendsMode || sortedReviews.length > 0) {
+      return '';
+    }
+
+    if (initialIsGuest) {
+      return 'Sign in to filter checkpoints by friends.';
+    }
+
+    if ((followingUserIds || []).length === 0) {
+      return "You're not following anyone yet.";
+    }
+
+    return "People you follow have not posted checkpoints for this game yet.";
+  }, [followingUserIds, initialIsGuest, isFriendsMode, sortedReviews.length]);
 
   if (!reviews.length) {
     return (
@@ -64,11 +86,17 @@ export default function GameReviewFeed({ reviews }) {
         </div>
       </div>
 
-      <div className="space-y-6 max-w-5xl">
-        {sortedReviews.map((review) => (
-          <GameReviewCard key={review.id} review={review} />
-        ))}
-      </div>
+      {isFriendsMode && sortedReviews.length === 0 ? (
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 px-5 py-10 text-center">
+          <p className="text-sm font-medium text-zinc-400">{friendsEmptyMessage}</p>
+        </div>
+      ) : (
+        <div className="space-y-6 max-w-5xl">
+          {sortedReviews.map((review) => (
+            <GameReviewCard key={review.id} review={review} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

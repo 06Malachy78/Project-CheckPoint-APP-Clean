@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSuccess }) {
   const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
@@ -29,6 +30,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
     if (isOpen) {
       setIsSignUp(initialMode === 'signup');
       setEmail('');
+      setLoginIdentifier('');
       setPassword('');
       setUsername('');
       setPendingVerificationEmail('');
@@ -136,9 +138,32 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
         router.refresh();
       }
     } else {
-      // Clean, native email sign-in
+      const rawIdentifier = loginIdentifier.trim();
+      const resolveResponse = await fetch('/api/auth/resolve-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ identifier: rawIdentifier }),
+      });
+
+      let resolvedEmail = '';
+      try {
+        const resolvePayload = await resolveResponse.json();
+        resolvedEmail = (resolvePayload?.email || '').trim();
+
+        if (!resolveResponse.ok || !resolvedEmail) {
+          throw new Error(resolvePayload?.error || 'Invalid username/email or password.');
+        }
+      } catch (error) {
+        const fallbackMessage = 'Unable to sign in.';
+        setAuthMessage(toFriendlyAuthMessage(error?.message, fallbackMessage));
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: resolvedEmail,
         password: password,
       });
 
@@ -237,14 +262,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
             </div>
           )}
 
-          {/* EMAIL ADDRESS: Rendered for both Login and Signup */}
+          {/* LOGIN IDENTIFIER / EMAIL */}
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Email Address</label>
+            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+              {isSignUp ? 'Email Address' : 'Email or Username'}
+            </label>
             <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              type={isSignUp ? 'email' : 'text'}
+              value={isSignUp ? email : loginIdentifier}
+              onChange={(e) => (isSignUp ? setEmail(e.target.value) : setLoginIdentifier(e.target.value))}
+              placeholder={isSignUp ? 'you@example.com' : 'you@example.com or dave'}
               className="w-full text-white px-5 py-3.5 rounded-2xl outline-none border border-white/5 focus:border-[#00e054]/40 transition-all placeholder:text-zinc-700 text-sm"
               style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
               required
