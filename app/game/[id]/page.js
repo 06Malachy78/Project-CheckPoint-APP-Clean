@@ -44,8 +44,17 @@ export default async function GamePage({ params }) {
     .eq('game_id', id.toString())
     .order('created_at', { ascending: false });
 
+  let avatarByUserId = {};
   let avatarByUsername = {};
   if ((rawReviews ?? []).length > 0) {
+    const reviewerIds = Array.from(
+      new Set(
+        (rawReviews || [])
+          .map((review) => review.user_id)
+          .filter(Boolean)
+      )
+    );
+
     const usernames = Array.from(
       new Set(
         (rawReviews || [])
@@ -54,10 +63,39 @@ export default async function GamePage({ params }) {
       )
     );
 
-    if (usernames.length > 0) {
+    if (reviewerIds.length > 0) {
       const { data: profileRows, error: profileError } = await supabase
         .from('profiles')
-        .select('username, avatar_url, avatar, image_url')
+        .select('id, username, avatar_url')
+        .in('id', reviewerIds);
+
+      if (profileError) {
+        console.error('Unable to load reviewer avatars:', profileError.message);
+      } else {
+        const reduced = (profileRows || []).reduce(
+          (acc, row) => {
+            const avatar = row.avatar_url || '';
+            if (row.id) {
+              acc.byUserId[row.id] = avatar;
+            }
+
+            const usernameKey = (row.username || '').toLowerCase();
+            if (usernameKey) {
+              acc.byUsername[usernameKey] = avatar;
+            }
+
+            return acc;
+          },
+          { byUserId: {}, byUsername: {} }
+        );
+
+        avatarByUserId = reduced.byUserId;
+        avatarByUsername = reduced.byUsername;
+      }
+    } else if (usernames.length > 0) {
+      const { data: profileRows, error: profileError } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
         .in('username', usernames);
 
       if (profileError) {
@@ -66,7 +104,7 @@ export default async function GamePage({ params }) {
         avatarByUsername = (profileRows || []).reduce((acc, row) => {
           const key = (row.username || '').toLowerCase();
           if (key) {
-            acc[key] = row.avatar_url || row.avatar || row.image_url || '';
+            acc[key] = row.avatar_url || '';
           }
           return acc;
         }, {});
@@ -97,7 +135,11 @@ export default async function GamePage({ params }) {
   const reviews = (rawReviews ?? []).map((review) => ({
     ...review,
     like_count: reviewLikeCounts[review.id] ?? 0,
-    avatar_url: avatarByUsername[(review.username || '').toLowerCase()] || '',
+    avatar_url:
+      avatarByUserId[review.user_id] ||
+      avatarByUsername[(review.username || '').toLowerCase()] ||
+      review.avatar_url ||
+      '',
   }));
 
   if (!game) return <div className="text-white p-20">Game not found</div>;

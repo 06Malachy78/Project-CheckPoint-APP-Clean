@@ -28,28 +28,36 @@ export async function POST(request) {
     payload = {};
   }
 
-  const normalizedUsername = normalizeUsername(
-    payload?.username || user.user_metadata?.username || user.user_metadata?.display_name,
-    user.email || ''
-  );
-
-  const profileData = {
-    id: user.id,
-    username: normalizedUsername || 'user',
-    avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
-    updated_at: new Date().toISOString(),
-  };
-
   const adminSupabase = createAdminClient();
   const writeClient = adminSupabase || supabase;
 
+  const { data: existingProfile } = await writeClient
+    .from('profiles')
+    .select('username, avatar_url')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const metadataAvatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+  const resolvedUsername = normalizeUsername(
+    payload?.username || existingProfile?.username || user.user_metadata?.username || user.user_metadata?.display_name,
+    user.email || ''
+  );
+
   const { error } = await writeClient
     .from('profiles')
-    .upsert(profileData, { onConflict: 'id' });
+    .upsert(
+      {
+        id: user.id,
+        updated_at: new Date().toISOString(),
+        username: resolvedUsername || 'user',
+        avatar_url: metadataAvatarUrl || existingProfile?.avatar_url || null,
+      },
+      { onConflict: 'id' }
+    );
 
   if (error) {
     return NextResponse.json({ error: error.message || 'Unable to ensure profile.' }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, username: profileData.username });
+  return NextResponse.json({ ok: true, username: resolvedUsername || 'user' });
 }
