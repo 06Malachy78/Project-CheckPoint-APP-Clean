@@ -7,11 +7,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
   const [email, setEmail] = useState('');
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [loading, setLoading] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
   const router = useRouter();
 
@@ -32,9 +34,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       setEmail('');
       setLoginIdentifier('');
       setPassword('');
+      setShowPassword(false);
       setUsername('');
       setPendingVerificationEmail('');
       setResendLoading(false);
+      setForgotLoading(false);
       setAuthMessage('');
     }
   }, [isOpen, initialMode]);
@@ -60,6 +64,58 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
       return undefined;
     }
     return `${window.location.origin}/`;
+  };
+
+  const getPasswordResetRedirectUrl = () => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+    return `${window.location.origin}/reset-password`;
+  };
+
+  const handleForgotPassword = async () => {
+    const rawIdentifier = loginIdentifier.trim();
+    if (!rawIdentifier) {
+      setAuthMessage('Enter your email or username first.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setAuthMessage('');
+
+    const resolveResponse = await fetch('/api/auth/resolve-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ identifier: rawIdentifier }),
+    });
+
+    let resolvedEmail = '';
+    try {
+      const resolvePayload = await resolveResponse.json();
+      resolvedEmail = (resolvePayload?.email || '').trim();
+
+      if (!resolveResponse.ok || !resolvedEmail) {
+        throw new Error(resolvePayload?.error || 'Unable to send reset email.');
+      }
+    } catch (error) {
+      setAuthMessage(toFriendlyAuthMessage(error?.message, 'Unable to send reset email.'));
+      setForgotLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resolvedEmail, {
+      redirectTo: getPasswordResetRedirectUrl(),
+    });
+
+    if (error) {
+      setAuthMessage(toFriendlyAuthMessage(error.message, 'Unable to send reset email.'));
+    } else {
+      setAuthMessage('Password reset email sent. Check your inbox.');
+    }
+
+    setForgotLoading(false);
   };
 
   const handleResendVerification = async () => {
@@ -183,6 +239,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
     setLoading(false);
   };
 
+  const EyeIcon = ({ open }) => (
+    <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" />
+      <circle cx="12" cy="12" r="3" />
+      {!open && <path d="M4 4l16 16" />}
+    </svg>
+  );
+
   return (
     <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto">
       <div className="absolute inset-0" onClick={onClose} />
@@ -278,14 +342,37 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
           {/* PASSWORD */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Password</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full text-white px-5 py-3.5 rounded-2xl outline-none border border-white/5 focus:border-[#00e054]/40 transition-all hover:border-white/10"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
-              required
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full text-white px-5 pr-12 py-3.5 rounded-2xl outline-none border border-white/5 focus:border-[#00e054]/40 transition-all hover:border-white/10"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                required
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-8 w-8 rounded-full text-zinc-500 hover:text-[#00FF88] hover:bg-white/5 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <EyeIcon open={showPassword} />
+              </button>
+            </div>
+
+            {!isSignUp && (
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={forgotLoading || loading}
+                className="self-end mt-1 text-[10px] text-zinc-500 hover:text-[#00FF88] transition-colors duration-200 font-black uppercase tracking-widest disabled:opacity-60"
+              >
+                {forgotLoading ? 'Sending...' : 'Forgot password?'}
+              </button>
+            )}
           </div>
 
           <button   
