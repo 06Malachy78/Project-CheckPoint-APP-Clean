@@ -1,17 +1,6 @@
-const getBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL;
-  }
-
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  return "https://www.checkpoint-hub.com";
-};
+const BASE_URL = "https://checkpoint-hub.com";
 
 export default function sitemap() {
-  const baseUrl = getBaseUrl();
   const lastModified = new Date();
 
   const routes = [
@@ -24,7 +13,7 @@ export default function sitemap() {
   ];
 
   return routes.map((route) => ({
-    url: `${baseUrl}${route.path}`,
+    url: `${BASE_URL}${route.path}`,
     lastModified,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
