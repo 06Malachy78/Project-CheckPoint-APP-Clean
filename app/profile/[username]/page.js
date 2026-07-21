@@ -21,6 +21,53 @@ import {
 const FOLLOW_PREVIEW_LIMIT = 8;
 const FOLLOW_FULL_LIMIT_CAP = 1000;
 
+export async function generateMetadata({ params }) {
+  const { username } = params;
+  const adminSupabase = createAdminClient();
+  const supabase = adminSupabase ?? await createClient();
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, bio')
+    .eq('username', username)
+    .maybeSingle();
+
+  if (!profile) {
+    return {
+      title: 'Profile Not Found',
+      description: 'This Checkpoint Hub profile could not be found.',
+      alternates: {
+        canonical: `/profile/${encodeURIComponent(username)}`,
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const bio = (profile.bio || '').trim();
+  const description = bio || `View ${profile.username}'s game reviews, favourites, and activity on Checkpoint Hub.`;
+  const profileUrl = `https://checkpoint-hub.com/profile/${encodeURIComponent(profile.username)}`;
+
+  return {
+    title: profile.username,
+    description,
+    alternates: {
+      canonical: `/profile/${encodeURIComponent(profile.username)}`,
+    },
+    openGraph: {
+      title: `${profile.username} | Checkpoint Hub`,
+      description,
+      url: profileUrl,
+    },
+    twitter: {
+      title: `${profile.username} | Checkpoint Hub`,
+      description,
+    },
+  };
+}
+
 export default async function UserProfilePage({ params }) {
   const supabase = await createClient();
   const adminSupabase = createAdminClient();

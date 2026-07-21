@@ -19,6 +19,18 @@ import {
 const FOLLOW_PREVIEW_LIMIT = 8;
 const FOLLOW_FULL_LIMIT_CAP = 1000;
 
+export const metadata = {
+  title: 'Your Profile',
+  description: 'Manage your Checkpoint Hub profile, reviews, game statuses, favourites, and follow connections.',
+  alternates: {
+    canonical: '/profile',
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default async function ProfilePage() {
   const supabase = await createClient(); 
   

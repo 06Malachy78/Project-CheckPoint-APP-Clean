@@ -5,6 +5,75 @@ import GameReviewFeed from '../../../components/GameReviewFeed';
 import GameCoverCard from '../../../components/GameCoverCard';
 import { isGameFavorited } from '@/lib/favorites';
 
+function buildAbsoluteCoverUrl(coverUrl) {
+  if (!coverUrl) return '';
+
+  const upgradedCover = coverUrl.replace('t_thumb', 't_cover_big');
+  return upgradedCover.startsWith('//') ? `https:${upgradedCover}` : upgradedCover;
+}
+
+function trimDescription(text, fallback) {
+  const source = (text || fallback || '').trim();
+  return source.length > 160 ? `${source.slice(0, 157)}...` : source;
+}
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const game = await fetchGameData(id);
+
+  if (!game) {
+    return {
+      title: 'Game Not Found',
+      description: 'This game page could not be found on Checkpoint Hub.',
+      alternates: {
+        canonical: `/game/${id}`,
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const releaseYear = game.first_release_date
+    ? new Date(game.first_release_date * 1000).getFullYear()
+    : null;
+  const description = trimDescription(
+    game.summary,
+    `Explore ${game.name}${releaseYear ? ` (${releaseYear})` : ''} on Checkpoint Hub and read player reviews.`
+  );
+  const coverUrl = buildAbsoluteCoverUrl(game.cover?.url || '');
+  const gameUrl = `https://checkpoint-hub.com/game/${id}`;
+
+  return {
+    title: game.name,
+    description,
+    alternates: {
+      canonical: `/game/${id}`,
+    },
+    openGraph: {
+      title: `${game.name} | Checkpoint Hub`,
+      description,
+      url: gameUrl,
+      type: 'article',
+      images: coverUrl
+        ? [
+            {
+              url: coverUrl,
+              alt: `${game.name} cover art`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: coverUrl ? 'summary_large_image' : 'summary',
+      title: `${game.name} | Checkpoint Hub`,
+      description,
+      images: coverUrl ? [coverUrl] : undefined,
+    },
+  };
+}
+
 
 export default async function GamePage({ params }) {
   const { id } = await params;
@@ -156,8 +225,7 @@ export default async function GamePage({ params }) {
 
   if (!game) return <div className="text-white p-20">Game not found</div>;
 
-  const coverUrl = game.cover?.url?.replace('t_thumb', 't_cover_big') || '';
-  const finalCover = coverUrl.startsWith('//') ? `https:${coverUrl}` : coverUrl;
+  const finalCover = buildAbsoluteCoverUrl(game.cover?.url || '');
 
   return (
     <main className="min-h-screen bg-[#09090b] text-white">

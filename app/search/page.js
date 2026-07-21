@@ -5,6 +5,42 @@ import FollowButton from '@/components/FollowButton';
 import { createClient } from '@/lib/server';
 import Link from 'next/link';
 
+export async function generateMetadata({ searchParams }) {
+  const { q, type } = await searchParams;
+  const query = (q || '').trim();
+  const requestedType = (type || 'all').toLowerCase();
+  const activeType = ['all', 'games', 'users'].includes(requestedType) ? requestedType : 'all';
+  const scopeLabel = activeType === 'all' ? 'games and users' : activeType;
+
+  if (!query) {
+    return {
+      title: 'Search',
+      description: 'Search Checkpoint Hub for games, gamers, and new reviews to discover what to play next.',
+      alternates: {
+        canonical: '/search',
+      },
+      openGraph: {
+        title: 'Search Checkpoint Hub',
+        description: 'Search Checkpoint Hub for games, gamers, and new reviews to discover what to play next.',
+        url: 'https://checkpoint-hub.com/search',
+      },
+    };
+  }
+
+  return {
+    title: `Search: ${query}`,
+    description: `Browse ${scopeLabel} results for ${query} on Checkpoint Hub.`,
+    alternates: {
+      canonical: `/search?q=${encodeURIComponent(query)}${activeType !== 'all' ? `&type=${encodeURIComponent(activeType)}` : ''}`,
+    },
+    openGraph: {
+      title: `Search results for ${query} | Checkpoint Hub`,
+      description: `Browse ${scopeLabel} results for ${query} on Checkpoint Hub.`,
+      url: `https://checkpoint-hub.com/search?q=${encodeURIComponent(query)}${activeType !== 'all' ? `&type=${encodeURIComponent(activeType)}` : ''}`,
+    },
+  };
+}
+
 export default async function SearchPage({ searchParams }) {
   const supabase = await createClient();
   const {

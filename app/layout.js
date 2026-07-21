@@ -4,6 +4,31 @@ import Navbar from '@/components/Navbar';
 import { createClient } from '@/lib/server';
 import { Poppins } from 'next/font/google';
 
+export const metadata = {
+  metadataBase: new URL('https://checkpoint-hub.com'),
+  title: {
+    default: 'Checkpoint Hub',
+    template: '%s | Checkpoint Hub',
+  },
+  description: 'Discover, track, and review games with Checkpoint Hub.',
+  keywords: ['Checkpoint Hub', 'game reviews', 'video games', 'gaming community', 'game discovery'],
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Checkpoint Hub',
+    description: 'Discover, track, and review games with Checkpoint Hub.',
+    url: 'https://checkpoint-hub.com',
+    siteName: 'Checkpoint Hub',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Checkpoint Hub',
+    description: 'Discover, track, and review games with Checkpoint Hub.',
+  },
+};
+
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],

@@ -1,5 +1,18 @@
 import Link from 'next/link';
 
+export const metadata = {
+  title: 'About',
+  description: 'Learn about Checkpoint Hub, a community platform for discovering games, saving favourites, and sharing reviews.',
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'About Checkpoint Hub',
+    description: 'Learn about Checkpoint Hub, a community platform for discovering games, saving favourites, and sharing reviews.',
+    url: 'https://checkpoint-hub.com/about',
+  },
+};
+
 export default function AboutPage() {
   return (
     <>
