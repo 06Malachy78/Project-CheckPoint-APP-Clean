@@ -70,7 +70,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', onSu
     if (typeof window === 'undefined') {
       return undefined;
     }
-    return `${window.location.origin}/reset-password`;
+    return `${window.location.origin}/auth/reset-password`;
   };
 
   const handleForgotPassword = async () => {

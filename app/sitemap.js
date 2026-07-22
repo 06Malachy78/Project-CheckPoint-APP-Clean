@@ -9,7 +9,7 @@ export default function sitemap() {
     { path: "/search", changeFrequency: "daily", priority: 0.9 },
     { path: "/profile", changeFrequency: "weekly", priority: 0.7 },
     { path: "/login", changeFrequency: "monthly", priority: 0.3 },
-    { path: "/reset-password", changeFrequency: "monthly", priority: 0.2 },
+    { path: "/auth/reset-password", changeFrequency: "monthly", priority: 0.2 },
   ];
 
   return routes.map((route) => ({
