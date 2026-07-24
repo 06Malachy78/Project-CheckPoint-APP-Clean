@@ -35,6 +35,16 @@ const poppins = Poppins({
   display: 'swap',
 });
 
+import Head from 'next/head';
+
+
+    <>
+      <Head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+      </Head>
+    </>
+
+
 export default async function RootLayout({ children }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
